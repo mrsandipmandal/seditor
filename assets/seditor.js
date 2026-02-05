@@ -74,6 +74,11 @@ class SEditor {
             }
         });
 
+        // Update Toolbar State on interaction
+        this.page.addEventListener('keyup', () => this.updateToolbarState());
+        this.page.addEventListener('mouseup', () => this.updateToolbarState());
+        this.page.addEventListener('click', () => this.updateToolbarState());
+
         this.wrapper.appendChild(this.page);
         this.wrapper.appendChild(this.sourceArea);
         this.container.appendChild(this.wrapper);
@@ -163,7 +168,8 @@ class SEditor {
                     { icon: 'format_list_numbered', cmd: 'insertOrderedList', title: 'Num List' },
                     { icon: 'link', action: () => this.insertLink(), title: 'Link' },
                     { icon: 'image', action: () => this.insertImage(), title: 'Insert Image' },
-                    { icon: 'table_chart', action: () => this.insertTable(), title: 'Table' }
+                    { icon: 'table_chart', action: () => this.insertTable(), title: 'Table' },
+                    { icon: 'insert_page_break', action: () => this.insertPageBreak(), title: 'Page Break' }
                 ]
             },
             {
@@ -241,6 +247,7 @@ class SEditor {
                     const action = tool.action ? tool.action : () => this.cmd(tool.cmd);
                     const btn = this.createButton(tool.icon, tool.title, action);
                     if (tool.id) btn.id = tool.id;
+                    if (tool.cmd) btn.dataset.cmd = tool.cmd; // Store command for state checking
                     groupDiv.appendChild(btn);
                 }
             });
@@ -300,6 +307,28 @@ class SEditor {
     cmd(command, value = null) {
         document.execCommand(command, false, value);
         this.page.focus();
+        this.updateToolbarState(); // Update state immediately after command
+    }
+
+    updateToolbarState() {
+        if (!this.toolbar) return;
+
+        const tools = this.toolbar.querySelectorAll('.se-btn-tool');
+        tools.forEach(btn => {
+            const cmd = btn.dataset.cmd;
+            if (cmd && document.queryCommandState) {
+                try {
+                    const state = document.queryCommandState(cmd);
+                    if (state) {
+                        btn.classList.add('se-active');
+                    } else {
+                        btn.classList.remove('se-active');
+                    }
+                } catch (e) {
+                    // Ignore unsupported commands
+                }
+            }
+        });
     }
 
     setFontSize(size) {
@@ -374,5 +403,10 @@ class SEditor {
             html += '</tbody></table><p><br></p>';
             this.cmd('insertHTML', html);
         }
+    }
+
+    insertPageBreak() {
+        const html = '<hr class="se-page-break">';
+        this.cmd('insertHTML', html);
     }
 }

@@ -184,3 +184,41 @@
         padding: 10px;
     }
 }
+
+/* Active Button State */
+.se-btn-tool.se-active {
+    background-color: #e8f0fe;
+    color: #1a73e8;
+    border-color: #d2e3fc;
+}
+
+/* Page Break Visualization */
+.se-page-break,
+hr.se-page-break {
+    border: 0;
+    border-top: 1px dashed #999;
+    height: 1px;
+    margin: 20px 0;
+    position: relative;
+    page-break-after: always;
+    /* For printing */
+}
+
+.se-page-break::after {
+    content: "Page Break";
+    position: absolute;
+    top: -10px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: #fff;
+    color: #999;
+    padding: 0 10px;
+    font-size: 12px;
+    text-transform: uppercase;
+}
+
+/* Document Mode Page Break */
+.se-document-mode .se-page-break {
+    margin: 30px -40px;
+    /* Extend to edges in doc mode */
+}

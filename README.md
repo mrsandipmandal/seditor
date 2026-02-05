@@ -68,6 +68,19 @@ Initialize SEditor on the textarea.
 </script>
 ```
 
+### 3. Edit Mode (Loading Content)
+To load existing data (e.g., from a database), simply put it inside the textarea.
+```html
+<textarea id="my-editor">
+    <p>This is existing content loaded from the database.</p>
+    <b>SEditor will automatically pick it up!</b>
+</textarea>
+
+<script>
+    const editor = SEditor.create('#my-editor');
+</script>
+```
+
 ## Important Note for Laravel Users
 Run the `php artisan vendor:publish` command **in your Laravel Application root directory**, not inside the vendor/package directory.
 

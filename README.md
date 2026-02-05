@@ -54,12 +54,13 @@ Create a standard textarea for your form input.
 Initialize SEditor on the textarea.
 ```html
 <script>
-    SEditor.create('#my-editor', {
-        placeholder: 'Start writing your story...',
-        mode: 'classic' // Options: 'classic' | 'document'
-    });
+    // Initialize the editor on the textarea
+    const editor = SEditor.create('#my-editor');
 </script>
 ```
+
+## Important Note for Laravel Users
+Run the `php artisan vendor:publish` command **in your Laravel Application root directory**, not inside the vendor/package directory.
 
 ## Configuration
 

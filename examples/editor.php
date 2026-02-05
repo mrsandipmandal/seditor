@@ -17,7 +17,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Outlined" rel="stylesheet">
     
     <!-- Editor Library -->
-    <link rel="stylesheet" href="../assets/compact-editor.css">
+    <link rel="stylesheet" href="../assets/seditor.css">
 
     <style>
         body { font-family: 'Inter', sans-serif; background: #f5f5f5; padding: 20px; }
@@ -36,11 +36,11 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 <body>
 
 <div class="container">
-    <h1>PHP Form Integration</h1>
+    <h1>PHP Form Integration (SEditor)</h1>
     
     <form action="" method="post">
         <textarea id="my-editor" name="content" style="width: 100%; height: 300px;">
-            <?php echo $submittedContent ? htmlspecialchars($submittedContent) : '<p>Welcome! This is a <b>PHP enabled</b> editor demo.</p><p>Edit this content and click "Submit Content" below.</p>'; ?>
+            <?php echo $submittedContent ? htmlspecialchars($submittedContent) : '<p>Welcome! This is a <b>PHP enabled</b> demo of SEditor.</p>'; ?>
         </textarea>
         
         <button type="submit" class="btn-submit">Submit Content</button>
@@ -69,10 +69,12 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 </div>
 
 <!-- Script to Init -->
-<script src="../assets/compact-editor.js"></script>
+<script src="../assets/seditor.js"></script>
 <script>
     // Initialize the editor
-    CompactEditor.create('#my-editor');
+    SEditor.create('#my-editor', {
+        placeholder: 'Enter your rich text here...'
+    });
 </script>
 
 </body>

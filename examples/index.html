@@ -13,7 +13,7 @@
     <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Outlined" rel="stylesheet">
 
     <!-- Editor Library -->
-    <link rel="stylesheet" href="../assets/compact-editor.css">
+    <link rel="stylesheet" href="../assets/seditor.css">
     <style>
         body {
             font-family: sans-serif;
@@ -47,7 +47,7 @@
 
 <body>
 
-    <h2>Compact Editor Form Demo</h2>
+    <h2>SEditor Form Demo</h2>
     <p>This editor is replaced on a standard <code>&lt;textarea&gt;</code>. Type something and click "Show Value" to see
         the underlying textarea content.</p>
 
@@ -59,10 +59,10 @@
     <button onclick="showValue()">Show Textarea Value</button>
 
     <!-- Dependencies -->
-    <script src="../assets/compact-editor.js"></script>
+    <script src="../assets/seditor.js"></script>
     <script>
         // Initialize the editor on the textarea
-        const editor = CompactEditor.create('#my-editor');
+        const editor = SEditor.create('#my-editor');
 
         function showValue() {
             // Get the value from the original textarea to prove it synced

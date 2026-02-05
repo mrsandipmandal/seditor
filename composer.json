@@ -1,22 +1,43 @@
 {
-    "name": "open-php/compact-editor",
-    "description": "A lightweight, dependency-free WYSIWYG editor for PHP applications.",
+    "name": "open-php/seditor",
+    "description": "SEditor - A lightweight, dynamic, and dependency-free WYSIWYG editor for PHP applications.",
     "type": "library",
     "license": "MIT",
+    "homepage": "https://github.com/mrsandipmandal/seditor.git",
     "authors": [
         {
             "name": "Sandip Mandal",
-            "email": "sandip@example.com"
+            "email": "mr_sandip@zohomail.in"
         }
     ],
     "keywords": [
-        "wysiwyg",
+        "laravel",
+        "blade",
+        "components",
+        "bootstrap",
+        "ui",
         "editor",
-        "javascript",
-        "css",
-        "html",
-        "compact",
-        "ckeditor-alternative"
+        "wysiwyg",
+        "seditor",
+        "open-php",
+        "compact"
     ],
-    "require": {}
+    "autoload": {
+        "psr-4": {
+            "OpenPHP\\SEditor\\": "src/"
+        }
+    },
+    "require": {
+        "php": ">=8.0",
+        "illuminate/support": "^9.0|^10.0|^11.0"
+    },
+    "extra": {
+        "laravel": {
+            "providers": [
+                "OpenPHP\\SEditor\\SEditorServiceProvider"
+            ]
+        }
+    },
+    "minimum-stability": "stable",
+    "prefer-stable": true
 }

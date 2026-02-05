@@ -1,49 +1,68 @@
-class CompactEditor {
-    constructor(selector, options = {}) {
-        this.targetElement = document.querySelector(selector);
+class SEditor {
+    constructor(term, options = {}) {
+        // Support selector string or direct element
+        this.targetElement = typeof term === 'string' ? document.querySelector(term) : term;
+
         if (!this.targetElement) {
-            console.error(`CompactEditor: Element ${selector} not found.`);
+            console.error(`SEditor: Element not found.`);
             return;
         }
-        this.options = options;
+
+        // Default Options
+        this.options = {
+            mode: 'classic', // classic | document
+            placeholder: 'Start typing...',
+            toolbar: null, // If null, uses default
+            ...options
+        };
+
         this.init();
     }
 
-    static create(selector, options) {
-        return new CompactEditor(selector, options);
+    static create(term, options) {
+        return new SEditor(term, options);
     }
 
     init() {
         // Create UI Structure
         this.container = document.createElement('div');
-        this.container.className = 'ce-main-container';
+        this.container.className = 'se-main-container';
 
         this.toolbar = this.createToolbar();
         this.container.appendChild(this.toolbar);
 
         this.wrapper = document.createElement('div');
-        this.wrapper.className = 'ce-editor-wrapper';
+        this.wrapper.className = 'se-editor-wrapper';
 
         this.page = document.createElement('div');
-        this.page.className = 'ce-page-content';
+        this.page.className = 'se-page-content';
+
         if (this.options.mode === 'document') {
-            this.page.classList.add('ce-document-mode');
+            this.page.classList.add('se-document-mode');
         }
+
         this.page.contentEditable = true;
 
-        // Load initial content if any, or placeholder
+        // Create Source View Textarea (Hidden by default)
+        this.sourceArea = document.createElement('textarea');
+        this.sourceArea.className = 'se-source-view';
+        this.sourceArea.style.display = 'none';
+
+        // Load initial content
         if (this.targetElement.value) {
             this.page.innerHTML = this.targetElement.value;
         } else if (this.targetElement.innerHTML) {
             this.page.innerHTML = this.targetElement.innerHTML;
         } else {
-            this.page.innerHTML = '<p>Start typing...</p>';
+            this.page.innerHTML = `<p>${this.options.placeholder}</p>`;
         }
 
-        // Sync back to original element (if it's a textarea/input) on change
-        this.page.addEventListener('input', () => {
-            if (this.targetElement.tagName === 'TEXTAREA' || this.targetElement.tagName === 'INPUT') {
-                this.targetElement.value = this.page.innerHTML;
+        // Sync Handling
+        this.page.addEventListener('input', () => this.updateOriginal());
+        this.sourceArea.addEventListener('input', () => {
+            // In source mode, sync directly if form submit happens
+            if (this.isFormInput()) {
+                this.targetElement.value = this.sourceArea.value;
             }
         });
 
@@ -56,12 +75,11 @@ class CompactEditor {
         });
 
         this.wrapper.appendChild(this.page);
+        this.wrapper.appendChild(this.sourceArea);
         this.container.appendChild(this.wrapper);
 
-        // Replace target or append? 
-        // Best practice: Hide target (if textarea) and insert after. 
-        // If div, clear and append.
-        if (this.targetElement.tagName === 'TEXTAREA') {
+        // Replace logic
+        if (this.isFormInput()) {
             this.targetElement.style.display = 'none';
             this.targetElement.parentNode.insertBefore(this.container, this.targetElement.nextSibling);
         } else {
@@ -70,12 +88,24 @@ class CompactEditor {
         }
     }
 
-    createToolbar() {
-        const toolbar = document.createElement('div');
-        toolbar.className = 'ce-toolbar-container';
+    isFormInput() {
+        return this.targetElement.tagName === 'TEXTAREA' || this.targetElement.tagName === 'INPUT';
+    }
 
-        // Define groups and tools
-        const tools = [
+    updateOriginal() {
+        if (this.isFormInput()) {
+            this.targetElement.value = this.page.innerHTML;
+        }
+    }
+
+    getDefaultToolbar() {
+        return [
+            {
+                type: 'group',
+                items: [
+                    { icon: 'code', action: () => this.toggleSource(), title: 'View Source', id: 'se-btn-source' }
+                ]
+            },
             {
                 type: 'group',
                 items: [
@@ -143,37 +173,42 @@ class CompactEditor {
                 ]
             }
         ];
+    }
 
-        tools.forEach(group => {
+    createToolbar() {
+        const toolbar = document.createElement('div');
+        toolbar.className = 'se-toolbar-container';
+
+        // Use custom toolbar if provided, otherwise default
+        const toolParams = this.options.toolbar || this.getDefaultToolbar();
+
+        toolParams.forEach(group => {
             const groupDiv = document.createElement('div');
-            groupDiv.className = 'ce-toolbar-group';
+            groupDiv.className = 'se-toolbar-group';
 
             group.items.forEach(tool => {
                 if (tool.type === 'select') {
                     const select = document.createElement('select');
-                    select.className = 'ce-select-tool';
-                    select.title = tool.title;
+                    select.className = 'se-select-tool';
+                    select.title = tool.title || '';
 
                     if (tool.labels) {
-                        // Use values and labels
                         tool.options.forEach((opt, index) => {
                             const option = document.createElement('option');
                             option.value = opt;
                             option.text = tool.labels[index];
-                            if (opt === 'p') option.selected = true;
-                            if (tool.cmd === 'fontName' && opt === 'Calibri') option.selected = true;
-                            if (tool.cmd === 'fontSize' && opt === 12) option.selected = true;
+                            // Basic default selection logic
+                            if (opt === 'p' || (tool.cmd === 'fontName' && opt === 'Calibri') || (tool.cmd === 'fontSize' && opt === 12)) {
+                                option.selected = true;
+                            }
                             select.appendChild(option);
                         });
                     } else {
-                        // Simple array
                         tool.options.forEach(opt => {
                             const option = document.createElement('option');
                             option.value = opt;
                             option.text = opt;
-                            if (opt === 12 || opt === 'Calibri') option.selected = true;
-                            // Line height default
-                            if (tool.cmd === 'lineHeight' && opt === '1.5') option.selected = true;
+                            if (opt === 12 || opt === 'Calibri' || (tool.cmd === 'lineHeight' && opt === '1.5')) option.selected = true;
                             select.appendChild(option);
                         });
                     }
@@ -189,13 +224,10 @@ class CompactEditor {
                     groupDiv.appendChild(select);
 
                 } else if (tool.type === 'color') {
-                    // wrapper for color picker
-                    const btn = this.createButton(tool.icon, tool.title, () => {
-                        input.click();
-                    });
-                    // colored indicator
-                    btn.querySelector('i').style.borderBottom = `3px solid ${tool.color === 'yellow' ? 'transparent' : tool.color}`;
-                    if (tool.color === 'yellow') btn.querySelector('i').style.background = 'yellow';
+                    const btn = this.createButton(tool.icon, tool.title, () => input.click());
+                    const i = btn.querySelector('i');
+                    i.style.borderBottom = `3px solid ${tool.color === 'yellow' ? 'transparent' : tool.color}`;
+                    if (tool.color === 'yellow') i.style.background = 'yellow';
 
                     const input = document.createElement('input');
                     input.type = 'color';
@@ -206,9 +238,9 @@ class CompactEditor {
                     groupDiv.appendChild(input);
 
                 } else {
-                    // Standard button
                     const action = tool.action ? tool.action : () => this.cmd(tool.cmd);
                     const btn = this.createButton(tool.icon, tool.title, action);
+                    if (tool.id) btn.id = tool.id;
                     groupDiv.appendChild(btn);
                 }
             });
@@ -218,13 +250,48 @@ class CompactEditor {
         return toolbar;
     }
 
+    toggleSource() {
+        if (this.sourceArea.style.display === 'none') {
+            // Switch to Source
+            this.sourceArea.value = this.page.innerHTML;
+            this.sourceArea.style.display = 'block';
+            this.page.style.display = 'none';
+
+            const btn = this.container.querySelector('#se-btn-source');
+            if (btn) btn.classList.add('se-active');
+
+            this.setToolbarDisabled(true);
+        } else {
+            // Switch to Design
+            this.page.innerHTML = this.sourceArea.value;
+            this.updateOriginal();
+            this.sourceArea.style.display = 'none';
+            this.page.style.display = 'block';
+
+            const btn = this.container.querySelector('#se-btn-source');
+            if (btn) btn.classList.remove('se-active');
+
+            this.setToolbarDisabled(false);
+        }
+    }
+
+    setToolbarDisabled(disabled) {
+        const tools = this.toolbar.querySelectorAll('button, select, input');
+        tools.forEach(tool => {
+            if (tool.id !== 'se-btn-source') {
+                tool.disabled = disabled;
+                tool.style.opacity = disabled ? '0.5' : '1';
+            }
+        });
+    }
+
     createButton(icon, title, onClick) {
         const btn = document.createElement('button');
-        btn.className = 'ce-btn-tool';
-        btn.title = title;
+        btn.className = 'se-btn-tool';
+        btn.title = title || '';
         btn.innerHTML = `<i class="material-icons-outlined">${icon}</i>`;
         btn.onclick = (e) => {
-            e.preventDefault(); // prevent form submit if in form
+            e.preventDefault();
             onClick(e);
         };
         return btn;
@@ -238,7 +305,6 @@ class CompactEditor {
     setFontSize(size) {
         const selection = window.getSelection();
         if (selection.rangeCount > 0) {
-            // Use execCommand 7 as a temporary marker
             document.execCommand('fontSize', false, '7');
             const fontElements = this.page.getElementsByTagName("font");
             for (let i = 0; i < fontElements.length; i++) {
@@ -252,23 +318,12 @@ class CompactEditor {
 
     setLineHeight(value) {
         let finalValue = value;
-
         if (value === 'Custom') {
-            const custom = prompt("Enter Line Height (e.g., 1.2, 2.5, 150%):", "1.5");
-            if (!custom) return; // User cancelled
+            const custom = prompt("Enter Line Height (e.g., 1.5, 30px):", "1.5");
+            if (!custom) return;
             finalValue = custom;
-
-            // Update the dropdown logic if needed, or just let it apply
-            // (Re-selecting 'Custom' in the dropdown won't visually show the number but it works)
         }
 
-        // Apply line-height to the current block
-        // execCommand doesn't support line-height directly, so we use a block format approach
-        // or just apply it to the main page if no selection (simplified). 
-        // For a library, let's try to apply to the selection block.
-        // A simple hack: toggle a span? No, line-height is block level.
-        // We will simple apply it to the selection's parent block or the whole page if difficult.
-        // Let's try applying to the parent element of the selection.
         const selection = window.getSelection();
         if (selection.rangeCount > 0) {
             const range = selection.getRangeAt(0);
@@ -276,11 +331,9 @@ class CompactEditor {
                 ? range.commonAncestorContainer
                 : range.commonAncestorContainer.parentElement;
 
-            // If parent is the page itself, set on page.
             if (parent === this.page) {
                 this.page.style.lineHeight = finalValue;
             } else {
-                // Try to find the nearest block (P, DIV, H1-6)
                 let block = parent;
                 while (block && block !== this.page && !['P', 'DIV', 'H1', 'H2', 'H3', 'H4', 'H5', 'H6', 'LI'].includes(block.tagName)) {
                     block = block.parentElement;
@@ -288,30 +341,26 @@ class CompactEditor {
                 if (block && block !== this.page) {
                     block.style.lineHeight = finalValue;
                 } else {
-                    this.cmd('formatBlock', 'p'); // Ensure it's a block
-                    setTimeout(() => this.setLineHeight(finalValue), 0); // Retry
+                    this.cmd('formatBlock', 'p');
+                    setTimeout(() => this.setLineHeight(finalValue), 0);
                 }
             }
         }
     }
 
     insertLink() {
-        const url = prompt("Enter the URL:");
-        if (url) {
-            this.cmd('createLink', url);
-        }
+        const url = prompt("Enter Link URL:");
+        if (url) this.cmd('createLink', url);
     }
 
     insertImage() {
         const url = prompt("Enter Image URL:");
-        if (url) {
-            this.cmd('insertImage', url);
-        }
+        if (url) this.cmd('insertImage', url);
     }
 
     insertTable() {
-        const rows = prompt("Enter number of rows:", 3);
-        const cols = prompt("Enter number of columns:", 3);
+        const rows = prompt("Rows:", 3);
+        const cols = prompt("Columns:", 3);
 
         if (rows > 0 && cols > 0) {
             let html = '<table style="width:100%; border-collapse: collapse; margin-bottom: 1em;"><tbody>';

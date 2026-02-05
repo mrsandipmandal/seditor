@@ -1,53 +1,81 @@
 # SEditor (Open PHP)
 
-**SEditor** (formerly CompactEditor) is a lightweight, dependency-free WYSIWYG editor for PHP applications.
+**SEditor** is a lightweight, dependency-free WYSIWYG editor for PHP applications. It handles rich text editing, form synchronization, and asset management seamlessly.
 
 ## Features
 -   **Zero Dependencies**: Pure Vanilla JS/CSS.
--   **Compact & Dynamic**: CKEditor-style toolbar, fully customizable via options.
--   **PHP Form Ready**: Syncs with `<textarea>` automatically.
--   **View Source**: Toggle raw HTML editing.
--   **Rich Tools**: Headings, Fonts, Spacing, Image, Table, etc.
+-   **Compatibility**: PHP 5.6+ and Laravel 5.x - 11.x support.
+-   **Form & Database Ready**: Automatically syncs content to a hidden `<textarea>`.
+-   **Dynamic Toolbar**: Configure tools, placeholders, and modes.
+-   **Source View**: Toggle between Visual and HTML Code view.
+-   **Rich Tools**:
+    -   Formatting: Bold, Italic, Underline, Strike, Sub/Superscript.
+    -   Structure: Headings (H1-H3), Paragraphs, Lists (Bullet/Number).
+    -   Media: Insert Image, Link, Table.
+    -   Styling: Fonts, Font Size, Text Color, Highlight Color.
+    -   Layout: Alignment (Left, Center, Right, Justify), Indentation.
 
 ## Installation
 
-### Method 1: Composer (Laravel)
-1.  Run the following command:
+### Method 1: Composer (Laravel / Modern PHP)
+1.  Run the command:
     ```bash
     composer require open-php/seditor
     ```
-2.  Publish the assets:
+2.  **Laravel**: Publish the assets:
     ```bash
     php artisan vendor:publish --tag=seditor-assets
     ```
-3.  Include assets in your Blade layout:
+    Then link in your Blade layout:
     ```html
     <link rel="stylesheet" href="{{ asset('vendor/seditor/seditor.css') }}">
     <script src="{{ asset('vendor/seditor/seditor.js') }}"></script>
     ```
 
-### Method 2: Manual / Standard PHP
-1.  Copy `assets/seditor.js` and `assets/seditor.css` to your public directory.
-2.  Include them in your project.
+3.  **Standard PHP**: Copy files from `vendor/open-php/seditor/assets` to your public folder.
 
-## Usage
+### Method 2: Manual Download
+1.  Download the repository.
+2.  Copy `assets/seditor.js` and `assets/seditor.css` to your project.
+3.  Include them in your HTML head/body.
 
-### 1. Include Assets
+## Quick Start
+
+### 1. The HTML
+Create a standard textarea for your form input.
 ```html
-<link href="https://fonts.googleapis.com/icon?family=Material+Icons+Outlined" rel="stylesheet">
-<link rel="stylesheet" href="assets/seditor.css">
-<script src="assets/seditor.js"></script>
+<form method="POST" action="save.php">
+    <textarea id="my-editor" name="content"></textarea>
+    <button type="submit">Save</button>
+</form>
 ```
 
-### 2. Initialize
-```javascript
-// Simple
-SEditor.create('#my-editor');
+### 2. The Script
+Initialize SEditor on the textarea.
+```html
+<script>
+    SEditor.create('#my-editor', {
+        placeholder: 'Start writing your story...',
+        mode: 'classic' // Options: 'classic' | 'document'
+    });
+</script>
+```
 
-// With Options
+## Configuration
+
+| Option | Type | Default | Description |
+| :--- | :--- | :--- | :--- |
+| `placeholder` | String | `'Start typing...'` | Text to show when empty. |
+| `mode` | String | `'classic'` | `'classic'` (fluid width) or `'document'` (A4 page style). |
+| `toolbar` | Array | `null` | Custom array of toolbar groups. |
+
+### Custom Toolbar Example
+```javascript
 SEditor.create('#my-editor', {
-    placeholder: 'Type here...',
-    mode: 'classic' // or 'document'
+    toolbar: [
+        { type: 'group', items: [{ icon: 'bold', cmd: 'bold' }] },
+        { type: 'group', items: [{ icon: 'code', action: function() { /* ... */ } }] }
+    ]
 });
 ```
 

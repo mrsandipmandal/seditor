@@ -1,0 +1,22 @@
+{
+    "name": "open-php/compact-editor",
+    "description": "A lightweight, dependency-free WYSIWYG editor for PHP applications.",
+    "type": "library",
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "Sandip Mandal",
+            "email": "sandip@example.com"
+        }
+    ],
+    "keywords": [
+        "wysiwyg",
+        "editor",
+        "javascript",
+        "css",
+        "html",
+        "compact",
+        "ckeditor-alternative"
+    ],
+    "require": {}
+}

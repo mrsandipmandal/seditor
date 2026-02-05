@@ -1,0 +1,191 @@
+:root {
+    --ce-bg-color: #f0f2f5;
+    --ce-toolbar-bg: #ffffff;
+    --ce-toolbar-border: #e0e0e0;
+    --ce-icon-color: #444;
+    --ce-icon-hover: #e8f0fe;
+    --ce-icon-active: #d2e3fc;
+    --ce-border-radius: 6px;
+    --ce-accent-color: #1a73e8;
+}
+
+/* Main Container */
+.ce-main-container {
+    display: flex;
+    flex-direction: column;
+    border: 1px solid #ccc;
+    background: var(--ce-bg-color);
+    font-family: 'Inter', sans-serif;
+    overflow: hidden;
+    height: 100%;
+    /* Make sure it takes up space */
+}
+
+/* Toolbar */
+.ce-toolbar-container {
+    background: var(--ce-toolbar-bg);
+    border-bottom: 1px solid var(--ce-toolbar-border);
+    padding: 8px 16px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.02);
+    z-index: 10;
+}
+
+.ce-toolbar-group {
+    display: flex;
+    align-items: center;
+    gap: 2px;
+    padding-right: 8px;
+    border-right: 1px solid #eee;
+    margin-right: 8px;
+}
+
+.ce-toolbar-group:last-child {
+    border-right: none;
+}
+
+/* Buttons */
+.ce-btn-tool {
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    padding: 6px;
+    border-radius: var(--ce-border-radius);
+    color: var(--ce-icon-color);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background 0.2s, color 0.2s;
+}
+
+.ce-btn-tool:hover {
+    background-color: var(--ce-icon-hover);
+    color: var(--ce-accent-color);
+}
+
+.ce-btn-tool:active {
+    background-color: var(--ce-icon-active);
+}
+
+.ce-btn-tool i {
+    font-size: 20px;
+}
+
+/* Selects */
+.ce-select-tool {
+    padding: 6px 8px;
+    border: 1px solid #ddd;
+    border-radius: var(--ce-border-radius);
+    font-size: 14px;
+    cursor: pointer;
+    outline: none;
+    background: white;
+    color: #444;
+    font-family: 'Inter', sans-serif;
+}
+
+.ce-select-tool:focus {
+    border-color: var(--ce-accent-color);
+}
+
+/* Editor Area - wrapper */
+.ce-editor-wrapper {
+    flex: 1;
+    overflow-y: auto;
+    padding: 20px;
+    display: flex;
+    justify-content: center;
+    background: #e6e6e6;
+    /* Contrast background */
+    scrollbar-width: thin;
+}
+
+/* The actual editable "page" */
+.ce-page-content {
+    background: white;
+    padding: 20px;
+    outline: none;
+    font-family: 'Calibri', sans-serif;
+    font-size: 12pt;
+    line-height: 1.5;
+    box-sizing: border-box;
+    width: 100%;
+    /* Fluid by default */
+    min-height: 200px;
+}
+
+/* Source View Textarea */
+.ce-source-view {
+    width: 100%;
+    height: 100%;
+    box-sizing: border-box;
+    font-family: 'Courier New', monospace;
+    font-size: 14px;
+    padding: 20px;
+    border: 1px solid #ddd;
+    resize: none;
+    outline: none;
+    min-height: 200px;
+}
+
+/* Active Button State */
+.ce-btn-tool.ce-active {
+    background-color: var(--ce-icon-active);
+    color: var(--ce-accent-color);
+}
+
+/* Document Mode (A4 style) */
+.ce-page-content.ce-document-mode {
+    width: 210mm;
+    min-height: 297mm;
+    padding: 25mm;
+    margin: 0 auto;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    border: 1px solid #ddd;
+}
+
+/* Content Styles */
+.ce-page-content table {
+    border-collapse: collapse;
+    width: 100%;
+    margin: 10px 0;
+}
+
+.ce-page-content table,
+.ce-page-content th,
+.ce-page-content td {
+    border: 1px solid black;
+}
+
+.ce-page-content td,
+.ce-page-content th {
+    padding: 8px;
+    min-width: 20px;
+}
+
+.ce-page-content a {
+    color: var(--ce-accent-color);
+    text-decoration: underline;
+    cursor: pointer;
+}
+
+.ce-page-content img {
+    max-width: 100%;
+    height: auto;
+}
+
+/* Responsive */
+@media (max-width: 850px) {
+    .ce-page-content {
+        width: 100%;
+        margin: 0;
+        box-shadow: none;
+    }
+
+    .ce-editor-wrapper {
+        padding: 10px;
+    }
+}

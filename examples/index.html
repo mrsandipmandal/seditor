@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Compact Editor Demo (Textarea)</title>
+
+    <!-- Dependencies -->
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Calibri&family=Times+New+Roman&family=Arial&display=swap"
+        rel="stylesheet">
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Outlined" rel="stylesheet">
+
+    <!-- Editor Library -->
+    <link rel="stylesheet" href="../assets/compact-editor.css">
+    <style>
+        body {
+            font-family: sans-serif;
+            padding: 20px;
+            max-width: 900px;
+            margin: 0 auto;
+        }
+
+        h2 {
+            margin-top: 0;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        button {
+            background: #1a73e8;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background: #1557b0;
+        }
+    </style>
+</head>
+
+<body>
+
+    <h2>Compact Editor Form Demo</h2>
+    <p>This editor is replaced on a standard <code>&lt;textarea&gt;</code>. Type something and click "Show Value" to see
+        the underlying textarea content.</p>
+
+    <div class="form-group">
+        <!-- Target Textarea -->
+        <textarea id="my-editor" name="content" style="width: 100%; height: 200px;">
+            <p>Welcome to <b>CompactEditor</b>!</p>
+            <p>This content is inside a standard textarea.</p>
+        </textarea>
+    </div>
+
+    <button onclick="showValue()">Show Textarea Value</button>
+
+    <!-- Dependencies -->
+    <script src="../assets/compact-editor.js"></script>
+    <script>
+        // Initialize the editor on the textarea
+        const editor = CompactEditor.create('#my-editor');
+
+        function showValue() {
+            // Get the value from the original textarea to prove it synced
+            const val = document.getElementById('my-editor').value;
+            alert(val);
+            console.log(val);
+        }
+    </script>
+</body>
+
+</html>

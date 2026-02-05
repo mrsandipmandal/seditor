@@ -1,6 +1,5 @@
 {
     "name": "open-php/seditor",
-    "version": "1.0.0",
     "description": "SEditor - A lightweight, dynamic, and dependency-free WYSIWYG editor for PHP applications.",
     "type": "library",
     "license": "MIT",

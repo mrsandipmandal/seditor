@@ -17,27 +17,35 @@
 
 ## Installation
 
-### Method 1: Composer (Laravel / Modern PHP)
+### Method 1: Composer (Recommended)
 1.  Run the command:
     ```bash
     composer require open-php/seditor
     ```
-2.  **Laravel**: Publish the assets:
+
+2.  **For Laravel Users**:
+    Run the publish command:
     ```bash
     php artisan vendor:publish --tag=seditor-assets
     ```
-    Then link in your Blade layout:
-    ```html
-    <link rel="stylesheet" href="{{ asset('vendor/seditor/seditor.css') }}">
-    <script src="{{ asset('vendor/seditor/seditor.js') }}"></script>
-    ```
 
-3.  **Standard PHP**: Copy files from `vendor/open-php/seditor/assets` to your public folder.
+3.  **For Core PHP Users**:
+    Composer downloads files to the `vendor/` folder, which is **not accessible** by the browser for security reasons.
+    
+    **You must COPY them:**
+    1.  Go to `vendor/open-php/seditor/assets`.
+    2.  Copy the `seditor.js` and `seditor.css` files.
+    3.  Paste them into your public folder (e.g., `your-website/assets/`).
+    4.  Link them in your HTML:
+        ```html
+        <link rel="stylesheet" href="assets/seditor.css">
+        <script src="assets/seditor.js"></script>
+        ```
 
 ### Method 2: Manual Download
-1.  Download the repository.
+1.  Download this repository.
 2.  Copy `assets/seditor.js` and `assets/seditor.css` to your project.
-3.  Include them in your HTML head/body.
+3.  Include them in your HTML.
 
 ## Quick Start
 

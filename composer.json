@@ -39,6 +39,9 @@
             ]
         }
     },
+    "scripts": {
+        "publish-assets": "OpenPHP\\SEditor\\Installer::copyAssets"
+    },
     "minimum-stability": "stable",
     "prefer-stable": true
 }

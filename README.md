@@ -77,6 +77,10 @@ Add the script at the bottom of your page.
 
 ```html
 <script>
+    <!-- Initialize the editor on the textarea -->
+    const editor = SEditor.create('#my-editor');
+
+    <!-- Initialize the editor on the textarea with placeholder -->
     const editor = SEditor.create('#my-editor', {
         placeholder: 'Start writing your story...',
     });

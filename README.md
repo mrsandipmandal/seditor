@@ -30,17 +30,18 @@
     ```
 
 3.  **For Core PHP Users**:
-    Composer downloads files to the `vendor/` folder, which is **not accessible** by the browser for security reasons.
-    
-    **You must COPY them:**
-    1.  Go to `vendor/open-php/seditor/assets`.
-    2.  Copy the `seditor.js` and `seditor.css` files.
-    3.  Paste them into your public folder (e.g., `your-website/assets/`).
-    4.  Link them in your HTML:
-        ```html
-        <link rel="stylesheet" href="assets/seditor.css">
-        <script src="assets/seditor.js"></script>
-        ```
+    We have added a custom command to help you.
+    Run this command in your project terminal:
+    ```bash
+    composer run publish-assets
+    ```
+    This will automatically copy the files to your `assets/` folder.
+
+    Then link them in your HTML:
+    ```html
+    <link rel="stylesheet" href="assets/seditor.css">
+    <script src="assets/seditor.js"></script>
+    ```
 
 ### Method 2: Manual Download
 1.  Download this repository.
@@ -74,13 +75,14 @@ Run the `php artisan vendor:publish` command **in your Laravel Application root 
 
 | Option | Type | Default | Description |
 | :--- | :--- | :--- | :--- |
-| `placeholder` | String | `'Start typing...'` | Text to show when empty. |
+| `placeholder` | String | `''` | Text to show when empty. |
 | `mode` | String | `'classic'` | `'classic'` (fluid width) or `'document'` (A4 page style). |
 | `toolbar` | Array | `null` | Custom array of toolbar groups. |
 
 ### Custom Toolbar Example
 ```javascript
 SEditor.create('#my-editor', {
+    placeholder: 'Write your story...',
     toolbar: [
         { type: 'group', items: [{ icon: 'bold', cmd: 'bold' }] },
         { type: 'group', items: [{ icon: 'code', action: function() { /* ... */ } }] }

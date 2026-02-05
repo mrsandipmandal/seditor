@@ -11,7 +11,7 @@ class SEditor {
         // Default Options
         this.options = {
             mode: 'classic', // classic | document
-            placeholder: 'Start typing...',
+            placeholder: '',
             toolbar: null, // If null, uses default
             ...options
         };

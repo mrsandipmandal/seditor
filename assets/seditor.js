@@ -39,7 +39,11 @@ const ICONS = {
     format_clear: '<path d="M3.27 5L2 6.27l6.97 6.97L6.5 19h3l1.57-3.66L16.73 21 18 19.73 3.55 5.27 3.27 5zM6 5v.18L8.82 8h2.4l-.72 1.68 2.1 2.1L14.21 8H20V5H6z"/>',
     insert_page_break: '<path d="M6 4c-1.1 0-2 .9-2 2v5.5h16V6c0-1.1-.9-2-2-2H6zm0 16c-1.1 0-2-.9-2-2v-5.5h16V20c0 1.1-.9 2 2 2H6z"/>',
     sort_by_alpha: '<path d="M12.9 19.43l4.98-4.98-1.41-1.41-2.57 2.57V3h-2v12.59l-2.58-2.57-1.41 1.41 5 4.99zM7 6.47v1.51H2.57L6.02 12H2v1.5h6V12L4.55 7.98H7zM7 13v1.5H2v-1.5h5zm0 3.5v1.5H2v-1.5h5z"/>',
-    print: '<path d="M19 8h-1V3H6v5H5c-1.66 0-3 1.34-3 3v6h4v4h12v-4h4v-6c0-1.66-1.34-3-3-3zM8 5h8v3H8V5zm8 12v2H8v-2h8zm2-2v-2H6v2H4v-4c0-.55.45-1 1-1h14c.55 0 1 .45 1 1v4h-2z"/><circle cx="18" cy="11.5" r="1"/>'
+    print: '<path d="M19 8h-1V3H6v5H5c-1.66 0-3 1.34-3 3v6h4v4h12v-4h4v-6c0-1.66-1.34-3-3-3zM8 5h8v3H8V5zm8 12v2H8v-2h8zm2-2v-2H6v2H4v-4c0-.55.45-1 1-1h14c.55 0 1 .45 1 1v4h-2z"/><circle cx="18" cy="11.5" r="1"/>',
+    arrow_drop_down: '<path d="M7 10l5 5 5-5z"/>',
+    format_size: '<path d="M9 4v3h5v12h3V7h5V4H9zm-6 8h3v7h3v-7h3V9H3v3z"/>',
+    font_download: '<path d="M9.93 13.5h4.14L12 7.98zM20 2H4c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm-4.05 16.5l-1.14-3H9.17l-1.12 3H5.96l5.11-13h1.86l5.11 13h-2.09z"/>',
+    format_line_spacing: '<path d="M6 7h2.5L5 3.5 1.5 7H4v10H1.5L5 20.5 8.5 17H6V7zm4-2v2h12V5H10zm0 14h12v-2H10v2zm0-6h12v-2H10v2z"/>'
 };
 
 class SEditor {
@@ -59,6 +63,16 @@ class SEditor {
 
         // Store instance
         this.targetElement._seditor = this;
+
+        // Global dropdown closer
+        if (!window._seditorClickBound) {
+            document.addEventListener('click', (e) => {
+                if (!e.target.closest('.se-dropdown')) {
+                    document.querySelectorAll('.se-dropdown-menu.show').forEach(m => m.classList.remove('show'));
+                }
+            });
+            window._seditorClickBound = true;
+        }
 
         // Default Options
         this.options = {
@@ -174,9 +188,9 @@ class SEditor {
             {
                 type: 'group',
                 items: [
-                    { type: 'select', cmd: 'formatBlock', title: 'Format', options: ['p', 'h1', 'h2', 'h3', 'blockquote', 'pre'], labels: ['Normal', 'Heading 1', 'Heading 2', 'Heading 3', 'Quote', 'Code'] },
-                    { type: 'select', cmd: 'fontName', title: 'Font Family', options: ['Sans-Serif', 'Serif', 'Monospace', 'Arial', 'Courier New', 'Georgia', 'Tahoma', 'Times New Roman', 'Verdana'] },
-                    { type: 'select', cmd: 'fontSize', title: 'Font Size', options: [8, 9, 10, 11, 12, 14, 16, 18, 20, 24, 30, 36, 48, 72], customHandler: true }
+                    { type: 'select', cmd: 'formatBlock', title: 'Format', icon: 'format_size', options: ['p', 'h1', 'h2', 'h3', 'blockquote', 'pre'], labels: ['Normal', 'Heading 1', 'Heading 2', 'Heading 3', 'Quote', 'Code'] },
+                    { type: 'select', cmd: 'fontName', title: 'Font Family', icon: 'font_download', options: ['Sans-Serif', 'Serif', 'Monospace', 'Arial', 'Courier New', 'Georgia', 'Tahoma', 'Times New Roman', 'Verdana'] },
+                    { type: 'select', cmd: 'fontSize', title: 'Font Size', icon: 'format_size', options: [8, 9, 10, 11, 12, 14, 16, 18, 20, 24, 30, 36, 48, 72], customHandler: true }
                 ]
             },
             {
@@ -200,7 +214,7 @@ class SEditor {
             {
                 type: 'group',
                 items: [
-                    { type: 'select', cmd: 'lineHeight', title: 'Line Height', options: ['1.0', '1.15', '1.5', '2.0', 'Custom'], customHandler: true }
+                    { type: 'select', cmd: 'lineHeight', title: 'Line Height', icon: 'format_line_spacing', options: ['1.0', '1.15', '1.5', '2.0', 'Custom'], customHandler: true }
                 ]
             },
             {
@@ -248,40 +262,60 @@ class SEditor {
 
             group.items.forEach(tool => {
                 if (tool.type === 'select') {
-                    const select = document.createElement('select');
-                    select.className = 'se-select-tool';
-                    select.title = tool.title || '';
+                    // Create Custom Dropdown
+                    const dropdown = document.createElement('div');
+                    dropdown.className = 'se-dropdown';
 
-                    if (tool.labels) {
-                        tool.options.forEach((opt, index) => {
-                            const option = document.createElement('option');
-                            option.value = opt;
-                            option.text = tool.labels[index];
-                            // Basic default selection logic
-                            if (opt === 'p' || (tool.cmd === 'fontName' && opt === 'Calibri') || (tool.cmd === 'fontSize' && opt === 12)) {
-                                option.selected = true;
-                            }
-                            select.appendChild(option);
-                        });
-                    } else {
-                        tool.options.forEach(opt => {
-                            const option = document.createElement('option');
-                            option.value = opt;
-                            option.text = opt;
-                            if (opt === 12 || opt === 'Calibri' || (tool.cmd === 'lineHeight' && opt === '1.5')) option.selected = true;
-                            select.appendChild(option);
-                        });
-                    }
+                    const toggle = document.createElement('div');
+                    toggle.className = 'se-btn-tool se-dropdown-toggle';
+                    toggle.title = tool.title || '';
 
-                    select.onchange = (e) => {
-                        if (tool.customHandler) {
-                            if (tool.cmd === 'fontSize') this.setFontSize(e.target.value);
-                            if (tool.cmd === 'lineHeight') this.setLineHeight(e.target.value);
-                        } else {
-                            this.cmd(tool.cmd, e.target.value);
+                    // Icon + Arrow
+                    let iconSvg = ICONS[tool.icon] || ICONS['font_download'];
+                    if (!ICONS[tool.icon] && !tool.icon) iconSvg = '';
+                    let arrowSvg = ICONS['arrow_drop_down'];
+                    toggle.innerHTML = `<svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor">${iconSvg}</svg> <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor">${arrowSvg}</svg>`;
+
+                    const menu = document.createElement('div');
+                    menu.className = 'se-dropdown-menu';
+
+                    const options = tool.options || [];
+                    const labels = tool.labels || options;
+
+                    options.forEach((opt, idx) => {
+                        const item = document.createElement('a');
+                        item.className = 'se-dropdown-item';
+                        item.textContent = labels[idx];
+
+                        // Font Preview Styling
+                        if (tool.cmd === 'fontName') {
+                            item.style.fontFamily = opt;
+                            item.style.fontSize = '16px';
                         }
+
+                        item.onclick = (e) => {
+                            e.preventDefault();
+                            if (tool.customHandler) {
+                                if (tool.cmd === 'fontSize') this.setFontSize(opt);
+                                if (tool.cmd === 'lineHeight') this.setLineHeight(opt);
+                            } else {
+                                this.cmd(tool.cmd, opt);
+                            }
+                            this.closeAllDropdowns();
+                        };
+                        menu.appendChild(item);
+                    });
+
+                    toggle.onclick = (e) => {
+                        e.stopPropagation();
+                        // Close others first
+                        this.closeAllDropdowns(menu);
+                        menu.classList.toggle('show');
                     };
-                    groupDiv.appendChild(select);
+
+                    dropdown.appendChild(toggle);
+                    dropdown.appendChild(menu);
+                    groupDiv.appendChild(dropdown);
 
                 } else if (tool.type === 'color') {
                     const btn = this.createButton(tool.icon, tool.title, () => input.click());
@@ -543,6 +577,12 @@ class SEditor {
          `;
         printWindow.document.write(html);
         printWindow.document.close();
+    }
+
+    closeAllDropdowns(except = null) {
+        document.querySelectorAll('.se-dropdown-menu.show').forEach(m => {
+            if (m !== except) m.classList.remove('show');
+        });
     }
 
     // Public API Helpers

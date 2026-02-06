@@ -37,7 +37,7 @@ const ICONS = {
     image: '<path d="M21 19V5c0-1.1-.9-2-2-2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2zM8.5 13.5l2.5 3.01L14.5 12l4.5 6H5l3.5-4.5z"/>',
     table_chart: '<path d="M10 10.02h5V21h-5zM17 21h3c1.1 0 2-.9 2-2v-9h-5v11zm3-18H5c-1.1 0-2 .9-2 2v3h19V5c0-1.1-.9-2-2-2zM3 19c0 1.1.9 2 2 2h3V10H3v9z"/>',
     format_clear: '<path d="M3.27 5L2 6.27l6.97 6.97L6.5 19h3l1.57-3.66L16.73 21 18 19.73 3.55 5.27 3.27 5zM6 5v.18L8.82 8h2.4l-.72 1.68 2.1 2.1L14.21 8H20V5H6z"/>',
-    insert_page_break: '<path d="M21 11h-8v-2h8v2zm-2 4h-6v-2h6v2zm4-8h-10v-2h10v2zm-12 12h-4v-2h4v2zm-2-4h-6v-2h6v2zm-6-4h18v-2H3v2z"/>'
+    insert_page_break: '<path d="M6 4c-1.1 0-2 .9-2 2v5.5h16V6c0-1.1-.9-2-2-2H6zm0 16c-1.1 0-2-.9-2-2v-5.5h16V20c0 1.1-.9 2 2 2H6z"/>'
 };
 
 class SEditor {

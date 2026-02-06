@@ -46,16 +46,15 @@
     ```
 
 3.  **Link Assets:**
-    Add these to your HTML `<head>` and `<body>`:
+    Add just the script to your HTML (it will auto-load the CSS):
     ```html
-    <link rel="stylesheet" href="assets/seditor.css">
     <script src="assets/seditor.js"></script>
     ```
 
 ### Method 2: Manual Download
 1.  Download this repository.
 2.  Copy `assets/seditor.js` and `assets/seditor.css` to your project.
-3.  Include them in your HTML.
+3.  Include the script in your HTML.
 
 ---
 
@@ -77,13 +76,15 @@ Add the script at the bottom of your page.
 
 ```html
 <script>
-    <!-- Initialize the editor on the textarea -->
+    // Initialize with default options
     const editor = SEditor.create('#my-editor');
 
-    <!-- Initialize the editor on the textarea with placeholder -->
+    // OR Initialize with custom placeholder
+    /* 
     const editor = SEditor.create('#my-editor', {
         placeholder: 'Start writing your story...',
     });
+    */
 </script>
 ```
 

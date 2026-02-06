@@ -50,6 +50,14 @@ class SEditor {
             return;
         }
 
+        // Check if already initialized
+        if (this.targetElement._seditor) {
+            return this.targetElement._seditor;
+        }
+
+        // Store instance
+        this.targetElement._seditor = this;
+
         // Default Options
         this.options = {
             mode: 'classic', // classic | document
@@ -455,5 +463,15 @@ class SEditor {
     insertPageBreak() {
         const html = '<hr class="se-page-break">';
         this.cmd('insertHTML', html);
+    }
+
+    // Public API Helpers
+    setValue(html) {
+        this.page.innerHTML = html;
+        this.updateOriginal();
+    }
+
+    getValue() {
+        return this.page.innerHTML;
     }
 }

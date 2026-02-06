@@ -98,6 +98,20 @@ To load existing data (e.g., from a database), simply put it inside the textarea
 </textarea>
 ```
 
+### 4. Setting/Getting Content Programmatically
+You can also control the content via JavaScript:
+
+```javascript
+const editor = SEditor.create('#my-editor');
+
+// Set Content
+editor.setValue('<p>Hello World!</p>');
+
+// Get Content
+const content = editor.getValue();
+console.log(content);
+```
+
 ---
 
 ## Configuration

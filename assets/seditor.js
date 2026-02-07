@@ -154,6 +154,20 @@ class SEditor {
             }
         });
 
+        // Paste Sanitization (Strip bloated styles)
+        this.page.addEventListener('paste', (e) => {
+            e.preventDefault();
+            const text = (e.clipboardData || window.clipboardData).getData('text');
+            const html = (e.clipboardData || window.clipboardData).getData('text/html');
+
+            if (html) {
+                const clean = this.cleanHTML(html);
+                this.cmd('insertHTML', clean);
+            } else {
+                this.cmd('insertText', text);
+            }
+        });
+
         // Update Toolbar State on interaction
         this.page.addEventListener('keyup', () => this.updateToolbarState());
         this.page.addEventListener('mouseup', () => this.updateToolbarState());
@@ -179,7 +193,7 @@ class SEditor {
 
     updateOriginal() {
         if (this.isFormInput()) {
-            this.targetElement.value = this.page.innerHTML;
+            this.targetElement.value = this.cleanHTML(this.page.innerHTML);
         }
     }
 
@@ -237,22 +251,6 @@ class SEditor {
             {
                 type: 'group',
                 items: [
-                    { icon: 'code', action: () => this.toggleSource(), title: 'View Source', id: 'se-btn-source' },
-                    { icon: 'content_paste', action: () => this.pasteContent(), title: 'Paste' },
-                    { icon: 'print', action: () => this.printEditor(), title: 'Print' }
-                ]
-            },
-            {
-                type: 'group',
-                items: [
-                    { type: 'select', cmd: 'pageSize', title: 'Page Size', icon: 'page_size', options: ['A4', 'A5', 'Letter', 'Legal', 'Custom'], customHandler: true },
-                    { type: 'select', cmd: 'orientation', title: 'Orientation', icon: 'orientation', options: ['Portrait', 'Landscape'], customHandler: true },
-                    { type: 'select', cmd: 'margins', title: 'Margins', icon: 'margins', options: ['Normal', 'Narrow', 'Wide', 'Custom'], customHandler: true }
-                ]
-            },
-            {
-                type: 'group',
-                items: [
                     { icon: 'undo', action: () => this.undo(), title: 'Undo' },
                     { icon: 'redo', action: () => this.redo(), title: 'Redo' }
                 ]
@@ -293,7 +291,13 @@ class SEditor {
             {
                 type: 'group',
                 items: [
-                    { type: 'select', cmd: 'lineHeight', title: 'Line Height', icon: 'format_line_spacing', options: ['1.0', '1.15', '1.5', '2.0', 'Custom'], customHandler: true }
+                    { type: 'select', cmd: 'lineHeight', title: 'Line Height', icon: 'format_line_spacing', options: ['0.4', '0.5', '0.6', '0.7', '0.8', '0.9', '1.0', '1.15', '1.5', '2.0', 'Custom'], customHandler: true }
+                ]
+            },
+            {
+                type: 'group',
+                items: [
+                    { icon: 'format_clear', cmd: 'removeFormat', title: 'Clear Formatting' }
                 ]
             },
             {
@@ -322,9 +326,19 @@ class SEditor {
             {
                 type: 'group',
                 items: [
-                    { icon: 'format_clear', cmd: 'removeFormat', title: 'Clear Formatting' }
+                    { type: 'select', cmd: 'pageSize', title: 'Page Size', icon: 'page_size', options: ['A4', 'A5', 'Letter', 'Legal', 'Custom'], customHandler: true },
+                    { type: 'select', cmd: 'orientation', title: 'Orientation', icon: 'orientation', options: ['Portrait', 'Landscape'], customHandler: true },
+                    { type: 'select', cmd: 'margins', title: 'Margins', icon: 'margins', options: ['Normal', 'Narrow', 'Wide', 'Custom'], customHandler: true }
                 ]
-            }
+            },
+            {
+                type: 'group',
+                items: [
+                    { icon: 'code', action: () => this.toggleSource(), title: 'View Source', id: 'se-btn-source' },
+                    { icon: 'content_paste', action: () => this.pasteContent(), title: 'Paste' },
+                    { icon: 'print', action: () => this.printEditor(), title: 'Print' }
+                ]
+            },
         ];
     }
 
@@ -404,15 +418,10 @@ class SEditor {
                             this.restoreSelection();
                             if (tool.customHandler) {
                                 if (tool.cmd === 'fontSize') this.setFontSize(opt);
-                                if (tool.cmd === 'fontSize') this.setFontSize(opt);
-                                if (tool.cmd === 'fontSize') this.setFontSize(opt);
-                                if (tool.cmd === 'lineHeight') this.setLineHeight(opt);
-                                if (tool.cmd === 'pageSize') this.setPageSize(opt);
-                                if (tool.cmd === 'orientation') this.setOrientation(opt);
-                                if (tool.cmd === 'margins') this.setMargins(opt);
-                                if (tool.cmd === 'pageSize') this.setPageSize(opt);
-                                if (tool.cmd === 'orientation') this.setOrientation(opt);
-                                if (tool.cmd === 'margins') this.setMargins(opt);
+                                else if (tool.cmd === 'lineHeight') this.setLineHeight(opt);
+                                else if (tool.cmd === 'pageSize') this.setPageSize(opt);
+                                else if (tool.cmd === 'orientation') this.setOrientation(opt);
+                                else if (tool.cmd === 'margins') this.setMargins(opt);
                             } else {
                                 this.cmd(tool.cmd, opt);
                             }
@@ -740,18 +749,39 @@ class SEditor {
 
     printEditor() {
         const printWindow = window.open('', '_blank', 'width=800,height=600');
-        const cssLink = document.querySelector('link[href*="seditor.css"]')?.href || '';
+        if (!printWindow) {
+            alert("Pop-up blocked! Please allow pop-ups for this site.");
+            return;
+        }
+
+        // Get absolute path for CSS
+        const linkEl = document.querySelector('link[href*="seditor.css"]');
+        const cssHref = linkEl ? linkEl.href : '';
 
         const html = `
             <!DOCTYPE html>
             <html>
             <head>
                 <title>Print Document</title>
-                <link rel="stylesheet" href="${cssLink}">
+                ${cssHref ? `<link rel="stylesheet" href="${cssHref}">` : ''}
                 <style>
                     body { padding: 40px; font-family: sans-serif; }
                     .se-page-content { border: none !important; box-shadow: none !important; outline: none !important; }
-                    /* Hide internal UI markers if any */
+                    
+                    /* Override seditor.css print hiding */
+                    @media print {
+                        body * {
+                            visibility: visible !important;
+                        }
+                        .se-page-content {
+                            position: absolute;
+                            left: 0;
+                            top: 0;
+                            width: 100%;
+                            margin: 0;
+                            padding: 0;
+                        }
+                    }
                 </style>
             </head>
             <body>
@@ -760,13 +790,15 @@ class SEditor {
                 </div>
                 <script>
                     window.onload = function() {
-                        window.print();
-                        setTimeout(() => window.close(), 500);
+                        setTimeout(() => {
+                            window.print();
+                            window.close();
+                        }, 500);
                     }
                 <\/script>
             </body>
             </html>
-         `;
+        `;
         printWindow.document.write(html);
         printWindow.document.close();
     }
@@ -820,5 +852,41 @@ class SEditor {
             sel.removeAllRanges();
             sel.addRange(this.savedSelection);
         }
+    }
+
+
+    cleanHTML(html) {
+        const div = document.createElement('div');
+        div.innerHTML = html;
+
+        div.querySelectorAll('*').forEach(el => {
+            // Remove box-sizing (major bloat source)
+            if (el.style.boxSizing) el.style.removeProperty('box-sizing');
+            if (el.style.webkitBoxSizing) el.style.removeProperty('-webkit-box-sizing');
+
+            // Remove specific colors (often pasted from other sources)
+            const color = el.style.color;
+            if (color === 'rgb(51, 51, 51)' || color === 'rgb(0, 0, 0)' || color === '#333333' || color === 'black') {
+                el.style.removeProperty('color');
+            }
+
+            // Remove Word-specific artifacts
+            if (el.style.marginLeft === '0in') el.style.removeProperty('margin-left');
+            if (el.style.marginRight === '0in') el.style.removeProperty('margin-right');
+
+            // Clean up empty style attributes
+            if (el.getAttribute('style') === '') {
+                el.removeAttribute('style');
+            }
+
+            // Unwrap empty spans or spans with only atomic styles we removed
+            if (el.tagName === 'SPAN' && !el.hasAttributes()) {
+                const parent = el.parentNode;
+                while (el.firstChild) parent.insertBefore(el.firstChild, el);
+                parent.removeChild(el);
+            }
+        });
+
+        return div.innerHTML;
     }
 }

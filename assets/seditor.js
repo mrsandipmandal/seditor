@@ -483,7 +483,9 @@ class SEditor {
                 }
             }
         }
+        this.updateOriginal();
     }
+
 
     setLineHeight(value) {
         let finalValue = value;
@@ -491,30 +493,44 @@ class SEditor {
             const custom = prompt("Enter Line Height (e.g., 1.5, 30px):", "1.5");
             if (!custom) return;
             finalValue = custom;
+            this.restoreSelection(); // Restore if prompt lost it
         }
 
         const selection = window.getSelection();
         if (selection.rangeCount > 0) {
             const range = selection.getRangeAt(0);
-            const parent = range.commonAncestorContainer.nodeType === 1
-                ? range.commonAncestorContainer
-                : range.commonAncestorContainer.parentElement;
 
-            if (parent === this.page) {
-                this.page.style.lineHeight = finalValue;
+            // Use 'formatBlock' on root text if necessary
+            let ancestor = range.commonAncestorContainer;
+            if (ancestor.nodeType === 3) ancestor = ancestor.parentElement; // Text node -> Element
+
+            // Check if we are inside a block
+            const blockTags = ['P', 'DIV', 'H1', 'H2', 'H3', 'H4', 'H5', 'H6', 'LI', 'BLOCKQUOTE', 'PRE'];
+            let currentBlock = ancestor;
+            while (currentBlock && currentBlock !== this.page && !blockTags.includes(currentBlock.tagName)) {
+                currentBlock = currentBlock.parentElement;
+            }
+
+            if (currentBlock && currentBlock !== this.page) {
+                // Apply to single containing block
+                currentBlock.style.lineHeight = finalValue;
             } else {
-                let block = parent;
-                while (block && block !== this.page && !['P', 'DIV', 'H1', 'H2', 'H3', 'H4', 'H5', 'H6', 'LI'].includes(block.tagName)) {
-                    block = block.parentElement;
+                // Selection spans multiple blocks OR is raw text
+                // Attempt to wrap raw text first
+                if (ancestor === this.page) {
+                    document.execCommand('formatBlock', false, 'p');
                 }
-                if (block && block !== this.page) {
-                    block.style.lineHeight = finalValue;
-                } else {
-                    this.cmd('formatBlock', 'p');
-                    setTimeout(() => this.setLineHeight(finalValue), 0);
-                }
+
+                // Now iterate all blocks in selection
+                const blocks = this.page.querySelectorAll(blockTags.join(','));
+                blocks.forEach(block => {
+                    if (selection.containsNode(block, true)) {
+                        block.style.lineHeight = finalValue;
+                    }
+                });
             }
         }
+        this.updateOriginal();
     }
 
     insertLink() {

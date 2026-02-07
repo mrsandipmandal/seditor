@@ -43,7 +43,8 @@ const ICONS = {
     arrow_drop_down: '<path d="M7 10l5 5 5-5z"/>',
     format_size: '<path d="M9 4v3h5v12h3V7h5V4H9zm-6 8h3v7h3v-7h3V9H3v3z"/>',
     font_download: '<path d="M9.93 13.5h4.14L12 7.98zM20 2H4c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm-4.05 16.5l-1.14-3H9.17l-1.12 3H5.96l5.11-13h1.86l5.11 13h-2.09z"/>',
-    format_line_spacing: '<path d="M6 7h2.5L5 3.5 1.5 7H4v10H1.5L5 20.5 8.5 17H6V7zm4-2v2h12V5H10zm0 14h12v-2H10v2zm0-6h12v-2H10v2z"/>'
+    format_line_spacing: '<path d="M6 7h2.5L5 3.5 1.5 7H4v10H1.5L5 20.5 8.5 17H6V7zm4-2v2h12V5H10zm0 14h12v-2H10v2zm0-6h12v-2H10v2z"/>',
+    subject: '<path d="M14 17H4v2h10v-2zm6-8H4v2h16V9zM4 15h16v-2H4v2zM4 5v2h16V5H4z"/>'
 };
 
 class SEditor {
@@ -188,9 +189,16 @@ class SEditor {
             {
                 type: 'group',
                 items: [
-                    { type: 'select', cmd: 'formatBlock', title: 'Format', icon: 'format_size', options: ['p', 'h1', 'h2', 'h3', 'blockquote', 'pre'], labels: ['Normal', 'Heading 1', 'Heading 2', 'Heading 3', 'Quote', 'Code'] },
-                    { type: 'select', cmd: 'fontName', title: 'Font Family', icon: 'font_download', options: ['Sans-Serif', 'Serif', 'Monospace', 'Arial', 'Courier New', 'Georgia', 'Tahoma', 'Times New Roman', 'Verdana'] },
-                    { type: 'select', cmd: 'fontSize', title: 'Font Size', icon: 'format_size', options: [8, 9, 10, 11, 12, 14, 16, 18, 20, 24, 30, 36, 48, 72], customHandler: true }
+                    { type: 'select', cmd: 'formatBlock', title: 'Format', options: ['p', 'h1', 'h2', 'h3', 'blockquote', 'pre'], labels: ['Normal', 'Heading 1', 'Heading 2', 'Heading 3', 'Quote', 'Code'] },
+                    {
+                        type: 'select',
+                        cmd: 'fontName',
+                        title: 'Font Family',
+                        options: [
+                            'Arial', 'Arial Black', 'Comic Sans MS', 'Courier New', 'Georgia', 'Impact', 'Lucida Console', 'Lucida Sans Unicode', 'Palatino Linotype', 'Tahoma', 'Times New Roman', 'Trebuchet MS', 'Verdana', 'sans-serif', 'serif', 'monospace'
+                        ]
+                    },
+                    { type: 'select', cmd: 'fontSize', title: 'Font Size', options: [8, 9, 10, 11, 12, 14, 16, 18, 20, 24, 30, 36, 48, 72], customHandler: true }
                 ]
             },
             {
@@ -270,11 +278,31 @@ class SEditor {
                     toggle.className = 'se-btn-tool se-dropdown-toggle';
                     toggle.title = tool.title || '';
 
-                    // Icon + Arrow
-                    let iconSvg = ICONS[tool.icon] || ICONS['font_download'];
-                    if (!ICONS[tool.icon] && !tool.icon) iconSvg = '';
+                    // Icon + Arrow OR Text + Arrow
+                    let content = '';
+                    if (tool.icon) {
+                        const iconSvg = ICONS[tool.icon] || '';
+                        content = `<svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor">${iconSvg}</svg>`;
+                    } else {
+                        // Text Label - Default to first option or title
+                        let defaultLabel = tool.title;
+
+                        // Specific defaults for cleaner look
+                        if (tool.cmd === 'fontName') defaultLabel = 'Arial';
+                        else if (tool.cmd === 'fontSize') defaultLabel = '12';
+                        else if (tool.cmd === 'formatBlock') defaultLabel = 'Normal';
+                        else if (tool.labels && tool.labels.length > 0) defaultLabel = tool.labels[0];
+                        else if (tool.options && tool.options.length > 0) defaultLabel = tool.options[0];
+
+                        content = `<span class="se-dropdown-label" style="margin-right:4px; font-size:13px; font-weight:500;">${defaultLabel}</span>`;
+                        toggle.style.minWidth = '60px'; // Give some space
+                        toggle.style.justifyContent = 'space-between';
+                    }
+
                     let arrowSvg = ICONS['arrow_drop_down'];
-                    toggle.innerHTML = `<svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor">${iconSvg}</svg> <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor">${arrowSvg}</svg>`;
+                    toggle.innerHTML = `${content} <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor">${arrowSvg}</svg>`;
+
+                    if (tool.cmd) toggle.dataset.cmd = tool.cmd; // Mark for updates
 
                     const menu = document.createElement('div');
                     menu.className = 'se-dropdown-menu';
@@ -293,18 +321,37 @@ class SEditor {
                             item.style.fontSize = '16px';
                         }
 
+
+
+                        // Prevent focus loss on mousedown
+                        item.onmousedown = (e) => {
+                            e.preventDefault();
+                        };
+
                         item.onclick = (e) => {
                             e.preventDefault();
+                            this.restoreSelection();
                             if (tool.customHandler) {
                                 if (tool.cmd === 'fontSize') this.setFontSize(opt);
                                 if (tool.cmd === 'lineHeight') this.setLineHeight(opt);
                             } else {
                                 this.cmd(tool.cmd, opt);
                             }
+
+                            // Update label immediately
+                            const labelSpan = toggle.querySelector('.se-dropdown-label');
+                            if (labelSpan) labelSpan.textContent = labels[idx] || opt;
+
+
                             this.closeAllDropdowns();
                         };
                         menu.appendChild(item);
                     });
+
+                    toggle.onmousedown = (e) => {
+                        e.preventDefault(); // Prevent focus loss
+                        this.saveSelection();
+                    };
 
                     toggle.onclick = (e) => {
                         e.stopPropagation();
@@ -593,5 +640,24 @@ class SEditor {
 
     getValue() {
         return this.page.innerHTML;
+    }
+
+    saveSelection() {
+        const sel = window.getSelection();
+        if (sel.rangeCount > 0) {
+            const range = sel.getRangeAt(0);
+            if (this.page.contains(range.commonAncestorContainer)) {
+                this.savedSelection = range;
+            }
+        }
+    }
+
+    restoreSelection() {
+        if (this.savedSelection) {
+            this.page.focus({ preventScroll: true });
+            const sel = window.getSelection();
+            sel.removeAllRanges();
+            sel.addRange(this.savedSelection);
+        }
     }
 }

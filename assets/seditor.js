@@ -47,7 +47,8 @@ const ICONS = {
     subject: '<path d="M14 17H4v2h10v-2zm6-8H4v2h16V9zM4 15h16v-2H4v2zM4 5v2h16V5H4z"/>',
     page_size: '<path d="M14 2H6c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V8l-6-6zm2 16H8v-2h8v2zm0-4H8v-2h8v2zm-3-5V3.5L18.5 9H13z"/>',
     orientation: '<path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 14H8v-6h3v6zm6 0h-3v-6h3v6z"/>',
-    margins: '<path d="M3 3v18h18V3H3zm16 16H5V5h14v14zM11 7h2v2h-2zM7 7h2v2H7zm8 0h2v2h-2zm-8 4h2v2H7zm8 0h2v2h-2zm-4 4h2v2h-2zm-4 0h2v2H7zm8 0h2v2h-2z"/>'
+    margins: '<path d="M3 3v18h18V3H3zm16 16H5V5h14v14zM11 7h2v2h-2zM7 7h2v2H7zm8 0h2v2h-2zm-8 4h2v2H7zm8 0h2v2h-2zm-4 4h2v2h-2zm-4 0h2v2H7zm8 0h2v2h-2z"/>',
+    content_paste: '<path d="M19 2h-4.18C14.4.84 13.3 0 12 0c-1.3 0-2.4.84-2.82 2H5c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm-7 0c.55 0 1 .45 1 1s-.45 1-1 1-1-.45-1-1 .45-1 1-1zm7 18H5V4h2v3h10V4h2v16z"/>'
 };
 
 class SEditor {
@@ -127,8 +128,17 @@ class SEditor {
             this.page.innerHTML = `<p>${this.options.placeholder}</p>`;
         }
 
-        // Sync Handling
-        this.page.addEventListener('input', () => this.updateOriginal());
+        // History Init
+        this.historyStack = [];
+        this.historyIndex = -1;
+        this.saveState(); // Save initial state
+
+        // Sync Handling & History
+        this.page.addEventListener('input', () => {
+            this.updateOriginal();
+            this.saveState(); // Save on every input
+        });
+
         this.sourceArea.addEventListener('input', () => {
             // In source mode, sync directly if form submit happens
             if (this.isFormInput()) {
@@ -173,12 +183,62 @@ class SEditor {
         }
     }
 
+    // History Manager
+    saveState() {
+        // If we are in the middle of the stack (undone some moves), discard the future
+        if (this.historyIndex < this.historyStack.length - 1) {
+            this.historyStack = this.historyStack.slice(0, this.historyIndex + 1);
+        }
+
+        const state = {
+            html: this.page.innerHTML,
+            classes: this.page.className,
+            style: this.page.getAttribute('style') || ''
+        };
+
+        this.historyStack.push(state);
+        this.historyIndex++;
+
+        // Optional: Limit stack size (e.g., 50)
+        if (this.historyStack.length > 50) {
+            this.historyStack.shift();
+            this.historyIndex--;
+        }
+    }
+
+    undo() {
+        if (this.historyIndex > 0) {
+            this.historyIndex--;
+            this.restoreState(this.historyStack[this.historyIndex]);
+        }
+    }
+
+    redo() {
+        if (this.historyIndex < this.historyStack.length - 1) {
+            this.historyIndex++;
+            this.restoreState(this.historyStack[this.historyIndex]);
+        }
+    }
+
+    restoreState(state) {
+        this.page.innerHTML = state.html;
+        this.page.className = state.classes;
+        if (state.style) {
+            this.page.setAttribute('style', state.style);
+        } else {
+            this.page.removeAttribute('style');
+        }
+        this.updateOriginal();
+    }
+
+
     getDefaultToolbar() {
         return [
             {
                 type: 'group',
                 items: [
                     { icon: 'code', action: () => this.toggleSource(), title: 'View Source', id: 'se-btn-source' },
+                    { icon: 'content_paste', action: () => this.pasteContent(), title: 'Paste' },
                     { icon: 'print', action: () => this.printEditor(), title: 'Print' }
                 ]
             },
@@ -193,8 +253,8 @@ class SEditor {
             {
                 type: 'group',
                 items: [
-                    { icon: 'undo', cmd: 'undo', title: 'Undo' },
-                    { icon: 'redo', cmd: 'redo', title: 'Redo' }
+                    { icon: 'undo', action: () => this.undo(), title: 'Undo' },
+                    { icon: 'redo', action: () => this.redo(), title: 'Redo' }
                 ]
             },
             {
@@ -582,6 +642,7 @@ class SEditor {
             this.page.classList.add('se-page-orientation-landscape');
         }
         // Portrait is default
+        this.saveState();
     }
 
     setMargins(marginType) {
@@ -710,6 +771,21 @@ class SEditor {
         printWindow.document.close();
     }
 
+    async pasteContent() {
+        try {
+            const text = await navigator.clipboard.readText();
+            if (text) {
+                this.cmd('insertText', text);
+            }
+        } catch (err) {
+            // Fallback for browsers that block clipboard access or if permission denied
+            const text = prompt("Paste your text here:");
+            if (text) {
+                this.cmd('insertText', text);
+            }
+        }
+    }
+
     closeAllDropdowns(except = null) {
         document.querySelectorAll('.se-dropdown-menu.show').forEach(m => {
             if (m !== except) m.classList.remove('show');
@@ -721,6 +797,7 @@ class SEditor {
         this.page.innerHTML = html;
         this.updateOriginal();
     }
+
 
     getValue() {
         return this.page.innerHTML;

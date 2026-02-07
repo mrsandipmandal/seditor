@@ -160,7 +160,7 @@
     min-height: 200px;
 }
 
-/* Document Mode (A4 style) */
+/* Document Mode (A4 style default) */
 .se-page-content.se-document-mode {
     width: 210mm;
     min-height: 297mm;
@@ -168,6 +168,127 @@
     margin: 0 auto;
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
     border: 1px solid #ddd;
+    transition: width 0.3s, min-height 0.3s, padding 0.3s;
+}
+
+/* Page Sizes */
+.se-page-size-a4 {
+    width: 210mm;
+    min-height: 297mm;
+}
+
+.se-page-size-a5 {
+    width: 148mm;
+    min-height: 210mm;
+}
+
+.se-page-size-letter {
+    width: 216mm;
+    min-height: 279mm;
+}
+
+.se-page-size-legal {
+    width: 216mm;
+    min-height: 356mm;
+}
+
+/* Orientation */
+.se-page-orientation-landscape.se-page-size-a4 {
+    width: 297mm;
+    min-height: 210mm;
+}
+
+.se-page-orientation-landscape.se-page-size-a5 {
+    width: 210mm;
+    min-height: 148mm;
+}
+
+.se-page-orientation-landscape.se-page-size-letter {
+    width: 279mm;
+    min-height: 216mm;
+}
+
+.se-page-orientation-landscape.se-page-size-legal {
+    width: 356mm;
+    min-height: 216mm;
+}
+
+/* Margins */
+.se-page-margins-normal {
+    padding: 25mm;
+}
+
+.se-page-margins-narrow {
+    padding: 12.7mm;
+}
+
+.se-page-margins-wide {
+    padding: 50mm;
+}
+
+/* Print Media Query */
+@media print {
+    body * {
+        visibility: hidden;
+    }
+
+    .se-page-content.se-document-mode,
+    .se-page-content.se-document-mode * {
+        visibility: visible;
+    }
+
+    .se-page-content.se-document-mode {
+        position: absolute;
+        left: 0;
+        top: 0;
+        margin: 0;
+        padding: 0;
+        /* Reset padding for print, browser handles margins mostly, or we force it? */
+        /* Actually, for print we want to keep padding as 'margins' on the sheet if we are simulating paper */
+        box-shadow: none;
+        border: none;
+        width: 100%;
+        min-height: 100%;
+    }
+
+    @page {
+        size: auto;
+        /* Let browser handle or override in specific classes */
+        margin: 0;
+    }
+
+    /* Force size on print if supported */
+    .se-page-size-a4 {
+        size: A4 portrait;
+    }
+
+    .se-page-orientation-landscape.se-page-size-a4 {
+        size: A4 landscape;
+    }
+
+    .se-page-size-a5 {
+        size: A5 portrait;
+    }
+
+    .se-page-orientation-landscape.se-page-size-a5 {
+        size: A5 landscape;
+    }
+
+    .se-page-size-letter {
+        size: Letter portrait;
+    }
+
+    .se-page-orientation-landscape.se-page-size-letter {
+        size: Letter landscape;
+    }
+
+    .se-page-size-legal {
+        size: Legal portrait;
+    }
+
+    .se-page-orientation-landscape.se-page-size-legal {
+        size: Legal landscape;
+    }
 }
 
 /* Content Styles inside Page */

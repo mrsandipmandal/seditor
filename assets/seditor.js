@@ -44,7 +44,10 @@ const ICONS = {
     format_size: '<path d="M9 4v3h5v12h3V7h5V4H9zm-6 8h3v7h3v-7h3V9H3v3z"/>',
     font_download: '<path d="M9.93 13.5h4.14L12 7.98zM20 2H4c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm-4.05 16.5l-1.14-3H9.17l-1.12 3H5.96l5.11-13h1.86l5.11 13h-2.09z"/>',
     format_line_spacing: '<path d="M6 7h2.5L5 3.5 1.5 7H4v10H1.5L5 20.5 8.5 17H6V7zm4-2v2h12V5H10zm0 14h12v-2H10v2zm0-6h12v-2H10v2z"/>',
-    subject: '<path d="M14 17H4v2h10v-2zm6-8H4v2h16V9zM4 15h16v-2H4v2zM4 5v2h16V5H4z"/>'
+    subject: '<path d="M14 17H4v2h10v-2zm6-8H4v2h16V9zM4 15h16v-2H4v2zM4 5v2h16V5H4z"/>',
+    page_size: '<path d="M14 2H6c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V8l-6-6zm2 16H8v-2h8v2zm0-4H8v-2h8v2zm-3-5V3.5L18.5 9H13z"/>',
+    orientation: '<path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 14H8v-6h3v6zm6 0h-3v-6h3v6z"/>',
+    margins: '<path d="M3 3v18h18V3H3zm16 16H5V5h14v14zM11 7h2v2h-2zM7 7h2v2H7zm8 0h2v2h-2zm-8 4h2v2H7zm8 0h2v2h-2zm-4 4h2v2h-2zm-4 0h2v2H7zm8 0h2v2h-2z"/>'
 };
 
 class SEditor {
@@ -177,6 +180,14 @@ class SEditor {
                 items: [
                     { icon: 'code', action: () => this.toggleSource(), title: 'View Source', id: 'se-btn-source' },
                     { icon: 'print', action: () => this.printEditor(), title: 'Print' }
+                ]
+            },
+            {
+                type: 'group',
+                items: [
+                    { type: 'select', cmd: 'pageSize', title: 'Page Size', icon: 'page_size', options: ['A4', 'A5', 'Letter', 'Legal', 'Custom'], customHandler: true },
+                    { type: 'select', cmd: 'orientation', title: 'Orientation', icon: 'orientation', options: ['Portrait', 'Landscape'], customHandler: true },
+                    { type: 'select', cmd: 'margins', title: 'Margins', icon: 'margins', options: ['Normal', 'Narrow', 'Wide', 'Custom'], customHandler: true }
                 ]
             },
             {
@@ -333,7 +344,15 @@ class SEditor {
                             this.restoreSelection();
                             if (tool.customHandler) {
                                 if (tool.cmd === 'fontSize') this.setFontSize(opt);
+                                if (tool.cmd === 'fontSize') this.setFontSize(opt);
+                                if (tool.cmd === 'fontSize') this.setFontSize(opt);
                                 if (tool.cmd === 'lineHeight') this.setLineHeight(opt);
+                                if (tool.cmd === 'pageSize') this.setPageSize(opt);
+                                if (tool.cmd === 'orientation') this.setOrientation(opt);
+                                if (tool.cmd === 'margins') this.setMargins(opt);
+                                if (tool.cmd === 'pageSize') this.setPageSize(opt);
+                                if (tool.cmd === 'orientation') this.setOrientation(opt);
+                                if (tool.cmd === 'margins') this.setMargins(opt);
                             } else {
                                 this.cmd(tool.cmd, opt);
                             }
@@ -533,6 +552,55 @@ class SEditor {
         this.updateOriginal();
     }
 
+    setPageSize(size) {
+        // Remove existing size classes
+        Array.from(this.page.classList).forEach(cls => {
+            if (cls.startsWith('se-page-size-')) this.page.classList.remove(cls);
+        });
+        this.page.style.width = '';
+        this.page.style.minHeight = '';
+
+        if (size === 'Custom') {
+            const width = prompt("Enter Width (e.g. 210mm, 8.5in):", "210mm");
+            const height = prompt("Enter Height (e.g. 297mm, 11in):", "297mm");
+            if (width && height) {
+                this.page.style.width = width;
+                this.page.style.minHeight = height;
+            }
+        } else {
+            this.page.classList.add(`se-page-size-${size.toLowerCase()}`);
+        }
+    }
+
+    setOrientation(orientation) {
+        // Remove existing orientation classes
+        Array.from(this.page.classList).forEach(cls => {
+            if (cls.startsWith('se-page-orientation-')) this.page.classList.remove(cls);
+        });
+
+        if (orientation === 'Landscape') {
+            this.page.classList.add('se-page-orientation-landscape');
+        }
+        // Portrait is default
+    }
+
+    setMargins(marginType) {
+        // Remove existing margin classes
+        Array.from(this.page.classList).forEach(cls => {
+            if (cls.startsWith('se-page-margins-')) this.page.classList.remove(cls);
+        });
+        this.page.style.padding = '';
+
+        if (marginType === 'Custom') {
+            const margin = prompt("Enter Margin (e.g. 20mm, 1in):", "25mm");
+            if (margin) {
+                this.page.style.padding = margin;
+            }
+        } else {
+            this.page.classList.add(`se-page-margins-${marginType.toLowerCase()}`);
+        }
+    }
+
     insertLink() {
         const url = prompt("Enter Link URL:");
         if (url) this.cmd('createLink', url);
@@ -626,7 +694,7 @@ class SEditor {
                 </style>
             </head>
             <body>
-                <div class="se-page-content se-document-mode">
+                <div class="${this.page.className}" style="${this.page.getAttribute('style') || ''}">
                     ${this.page.innerHTML}
                 </div>
                 <script>

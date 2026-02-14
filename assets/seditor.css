@@ -404,3 +404,121 @@ hr.se-page-break {
     margin: 30px -40px;
     /* Extend to edges in doc mode */
 }
+
+/* Unified Popup */
+.se-popup {
+    position: absolute;
+    background: white;
+    border: 1px solid #ddd;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    padding: 8px;
+    /* Compact padding */
+    z-index: 10000;
+    border-radius: 4px;
+    font-family: sans-serif;
+    font-size: 13px;
+    width: 260px;
+    /* Compact width */
+    display: none;
+}
+
+.se-popup.visible {
+    display: block;
+}
+
+.se-popup input[type="text"],
+.se-popup input[type="number"] {
+    width: 100%;
+    padding: 4px 6px;
+    /* Compact padding */
+    margin-bottom: 6px;
+    /* Compact margin */
+    border: 1px solid #ccc;
+    border-radius: 3px;
+    box-sizing: border-box;
+    font-size: 13px;
+}
+
+.se-popup-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 8px;
+}
+
+.se-btn-primary,
+.se-btn-danger,
+.se-btn-secondary {
+    padding: 6px 12px;
+    border: none;
+    border-radius: 3px;
+    cursor: pointer;
+    font-size: 12px;
+    font-weight: 500;
+}
+
+.se-btn-primary {
+    background: #007bff;
+    color: white;
+}
+
+.se-btn-primary:hover {
+    background: #0056b3;
+}
+
+.se-btn-secondary {
+    background: #f0f0f0;
+    color: #333;
+}
+
+.se-btn-secondary:hover {
+    background: #e0e0e0;
+}
+
+.se-btn-danger {
+    background: #dc3545;
+    color: white;
+}
+
+.se-btn-danger:hover {
+    background: #bd2130;
+}
+
+.se-popup-tools {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+}
+
+.se-popup-preview {
+    flex-grow: 1;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    color: #007bff;
+    text-decoration: underline;
+    margin-right: 8px;
+    max-width: 180px;
+}
+
+/* Selection Markers (v3 Sticky Anchors) */
+#se-start-marker,
+#se-end-marker {
+    display: inline-block !important;
+    width: 0 !important;
+    height: 0 !important;
+    line-height: 0 !important;
+    overflow: hidden !important;
+    vertical-align: middle !important;
+    visibility: hidden !important;
+    pointer-events: none !important;
+}
+
+/* Visual Selection Guide */
+#se-visual-guide,
+.se-visual-guide-part {
+    background-color: #b3d4fc !important;
+    /* Standard selection blue */
+    color: inherit !important;
+    text-decoration: inherit !important;
+    display: inline;
+}

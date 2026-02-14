@@ -169,7 +169,21 @@ class SEditor {
         });
 
         // Update Toolbar State on interaction
-        this.page.addEventListener('keyup', () => this.updateToolbarState());
+        this.page.addEventListener('keyup', (e) => {
+            this.updateToolbarState();
+            // Slash Command
+            if (e.key === '/') {
+                const selection = window.getSelection();
+                if (selection.rangeCount > 0) {
+                    const range = selection.getRangeAt(0);
+                    const rect = range.getBoundingClientRect();
+                    // Basic check: only if collapsed (cursor)
+                    if (range.collapsed) {
+                        this.showPopup('menu', rect);
+                    }
+                }
+            }
+        });
         this.page.addEventListener('mouseup', () => this.updateToolbarState());
         this.page.addEventListener('click', () => this.updateToolbarState());
 
@@ -185,6 +199,8 @@ class SEditor {
             this.targetElement.innerHTML = '';
             this.targetElement.appendChild(this.container);
         }
+
+        this.createPopup();
     }
 
     isFormInput() {
@@ -251,6 +267,9 @@ class SEditor {
             {
                 type: 'group',
                 items: [
+                    { icon: 'code', action: () => this.toggleSource(), title: 'View Source', id: 'se-btn-source' },
+                    { icon: 'content_paste', action: () => this.pasteContent(), title: 'Paste' },
+                    { icon: 'print', action: () => this.printEditor(), title: 'Print' },
                     { icon: 'undo', action: () => this.undo(), title: 'Undo' },
                     { icon: 'redo', action: () => this.redo(), title: 'Redo' }
                 ]
@@ -278,7 +297,8 @@ class SEditor {
                     { icon: 'format_underlined', cmd: 'underline', title: 'Underline' },
                     { icon: 'strikethrough_s', cmd: 'strikeThrough', title: 'Strikethrough' },
                     { icon: 'subscript', cmd: 'subscript', title: 'Subscript' },
-                    { icon: 'superscript', cmd: 'superscript', title: 'Superscript' }
+                    { icon: 'superscript', cmd: 'superscript', title: 'Superscript' },
+                    { icon: 'format_clear', cmd: 'removeFormat', title: 'Clear Formatting' }
                 ]
             },
             {
@@ -291,24 +311,13 @@ class SEditor {
             {
                 type: 'group',
                 items: [
-                    { type: 'select', cmd: 'lineHeight', title: 'Line Height', icon: 'format_line_spacing', options: ['0.4', '0.5', '0.6', '0.7', '0.8', '0.9', '1.0', '1.15', '1.5', '2.0', 'Custom'], customHandler: true }
-                ]
-            },
-            {
-                type: 'group',
-                items: [
-                    { icon: 'format_clear', cmd: 'removeFormat', title: 'Clear Formatting' }
-                ]
-            },
-            {
-                type: 'group',
-                items: [
                     { icon: 'format_align_left', cmd: 'justifyLeft', title: 'Align Left' },
                     { icon: 'format_align_center', cmd: 'justifyCenter', title: 'Align Center' },
                     { icon: 'format_align_right', cmd: 'justifyRight', title: 'Align Right' },
                     { icon: 'format_align_justify', cmd: 'justifyFull', title: 'Justify' },
                     { icon: 'format_indent_decrease', cmd: 'outdent', title: 'Decrease Indent' },
-                    { icon: 'format_indent_increase', cmd: 'indent', title: 'Increase Indent' }
+                    { icon: 'format_indent_increase', cmd: 'indent', title: 'Increase Indent' },
+                    { type: 'select', cmd: 'lineHeight', title: 'Line Height', icon: 'format_line_spacing', options: ['0.8', '0.9', '1.0', '1.15', '1.5', '2.0', 'Custom'], customHandler: true }
                 ]
             },
             {
@@ -330,15 +339,7 @@ class SEditor {
                     { type: 'select', cmd: 'orientation', title: 'Orientation', icon: 'orientation', options: ['Portrait', 'Landscape'], customHandler: true },
                     { type: 'select', cmd: 'margins', title: 'Margins', icon: 'margins', options: ['Normal', 'Narrow', 'Wide', 'Custom'], customHandler: true }
                 ]
-            },
-            {
-                type: 'group',
-                items: [
-                    { icon: 'code', action: () => this.toggleSource(), title: 'View Source', id: 'se-btn-source' },
-                    { icon: 'content_paste', action: () => this.pasteContent(), title: 'Paste' },
-                    { icon: 'print', action: () => this.printEditor(), title: 'Print' }
-                ]
-            },
+            }
         ];
     }
 
@@ -529,10 +530,21 @@ class SEditor {
             e.preventDefault();
             onClick(e);
         };
+        // Prevent focus loss when clicking tool
+        btn.onmousedown = (e) => e.preventDefault();
         return btn;
     }
 
     cmd(command, value = null) {
+        // Special handling for color commands to ensure robust sequential application
+        if (command === 'foreColor' || command === 'hiliteColor') {
+            const sel = window.getSelection();
+            // If no selection or collapsed (and we have a saved one), try to restore
+            if ((!sel.rangeCount || sel.isCollapsed) && this.savedSelection) {
+                this.restoreSelection();
+            }
+        }
+
         document.execCommand(command, false, value);
         this.page.focus();
         this.updateToolbarState(); // Update state immediately after command
@@ -575,19 +587,31 @@ class SEditor {
     }
 
 
-    setLineHeight(value) {
+    setLineHeight(value, specificRange = null) {
         let finalValue = value;
         if (value === 'Custom') {
-            const custom = prompt("Enter Line Height (e.g., 1.5, 30px):", "1.5");
-            if (!custom) return;
-            finalValue = custom;
-            this.restoreSelection(); // Restore if prompt lost it
+            this.saveSelection();
+            const rect = this.getSmartRect();
+            this.showPopup('lineHeight', rect, { value: '1.5' }, (result) => {
+                if (result.value) {
+                    this.restoreSelection();
+                    this.setLineHeight(result.value, this.savedSelection);
+                }
+            });
+            return;
         }
 
-        const selection = window.getSelection();
-        if (selection.rangeCount > 0) {
-            const range = selection.getRangeAt(0);
+        let range;
+        if (specificRange) {
+            range = specificRange;
+        } else {
+            const selection = window.getSelection();
+            if (selection.rangeCount > 0) {
+                range = selection.getRangeAt(0);
+            }
+        }
 
+        if (range) {
             // Use 'formatBlock' on root text if necessary
             let ancestor = range.commonAncestorContainer;
             if (ancestor.nodeType === 3) ancestor = ancestor.parentElement; // Text node -> Element
@@ -607,12 +631,16 @@ class SEditor {
                 // Attempt to wrap raw text first
                 if (ancestor === this.page) {
                     document.execCommand('formatBlock', false, 'p');
+                    // Refresh range as formatBlock might have moved nodes
+                    const sel = window.getSelection();
+                    if (sel.rangeCount > 0) range = sel.getRangeAt(0);
                 }
 
                 // Now iterate all blocks in selection
                 const blocks = this.page.querySelectorAll(blockTags.join(','));
                 blocks.forEach(block => {
-                    if (selection.containsNode(block, true)) {
+                    // Check if block is part of selection
+                    if (range.intersectsNode(block)) {
                         block.style.lineHeight = finalValue;
                     }
                 });
@@ -621,7 +649,7 @@ class SEditor {
         this.updateOriginal();
     }
 
-    setPageSize(size) {
+    setPageSize(size, specificRange = null) {
         // Remove existing size classes
         Array.from(this.page.classList).forEach(cls => {
             if (cls.startsWith('se-page-size-')) this.page.classList.remove(cls);
@@ -630,12 +658,42 @@ class SEditor {
         this.page.style.minHeight = '';
 
         if (size === 'Custom') {
-            const width = prompt("Enter Width (e.g. 210mm, 8.5in):", "210mm");
-            const height = prompt("Enter Height (e.g. 297mm, 11in):", "297mm");
-            if (width && height) {
-                this.page.style.width = width;
-                this.page.style.minHeight = height;
-            }
+            this.saveSelection();
+            const rect = this.getSmartRect();
+            this.showPopup('pageSize', rect, { width: '210mm', height: '297mm' }, (result) => {
+                if (result.width && result.height) {
+                    this.restoreSelection();
+                    // Although unused logic-wise, passing it keeps consistency
+                    this.setPageSize(result.width, this.savedSelection);
+                    // Manual apply here for now since setPageSize logic doesn't use the arg yet, 
+                    // but calling it recursively handles the style application in the ELSE block or below.
+                    // Wait, recursive call? 
+                    // If I call setPageSize('210mm', range), it goes to else block.
+                    // But in else block: this.page.classList.add(...)
+                    // Wait, Custom logic manually sets style:
+                    // this.page.style.width = result.width;
+                    // this.page.style.minHeight = result.height;
+                    // this.saveState();
+
+                    // So if I call setPageSize recursively with a specific size string (e.g. 'Custom' -> no, result is width/height? No result is object).
+                    // Wait, setPageSize takes 'size' string (A4, Letter, Custom).
+                    // The popup returns specific width/height.
+                    // So I CANNOT call setPageSize recursively with the result because setPageSize expects a preset name or 'Custom'.
+                    // Unless I change setPageSize logic to accept direct dimensions? 
+                    // The current implementation deals with PRESETS or CUSTOM.
+                    // If Custom, it opens popup.
+                    // The actual application of custom size happens INSIDE the callback:
+                    // this.page.style.width = result.width; ...
+
+                    // So I DON'T need to call setPageSize recursively here.
+                    // I just need to ensure restoreSelection is called.
+                    // AND since 'size' is 'Custom', we are IN the Custom block.
+                    // Only setLineHeight needed recursive call because it RE-USED the logic.
+                    // setPageSize has specific logic for custom inside the callback.
+
+                    // So ignore recursive call for setPageSize. Just signature update.
+                }
+            });
         } else {
             this.page.classList.add(`se-page-size-${size.toLowerCase()}`);
         }
@@ -654,7 +712,7 @@ class SEditor {
         this.saveState();
     }
 
-    setMargins(marginType) {
+    setMargins(marginType, specificRange = null) {
         // Remove existing margin classes
         Array.from(this.page.classList).forEach(cls => {
             if (cls.startsWith('se-page-margins-')) this.page.classList.remove(cls);
@@ -662,41 +720,402 @@ class SEditor {
         this.page.style.padding = '';
 
         if (marginType === 'Custom') {
-            const margin = prompt("Enter Margin (e.g. 20mm, 1in):", "25mm");
-            if (margin) {
-                this.page.style.padding = margin;
-            }
+            this.saveSelection();
+            const rect = this.getSmartRect();
+            this.showPopup('margins', rect, { value: '25mm' }, (result) => {
+                if (result.value) {
+                    this.restoreSelection();
+                    this.page.style.padding = result.value;
+                    this.saveState();
+                }
+            });
         } else {
             this.page.classList.add(`se-page-margins-${marginType.toLowerCase()}`);
         }
     }
 
     insertLink() {
-        const url = prompt("Enter Link URL:");
-        if (url) this.cmd('createLink', url);
+        this.saveSelection();
+        const selection = window.getSelection();
+        const range = selection.rangeCount > 0 ? selection.getRangeAt(0) : null;
+        // Fallback rect if no range (e.g. lost focus)
+        const rect = this.getSmartRect();
+
+        let data = { url: '', text: selection.toString() };
+
+        let anchor = this.currentLink || this.getSelectionAnchor();
+        if (anchor) {
+            data.url = anchor.getAttribute('href');
+            data.text = anchor.innerText;
+            this.currentLink = anchor;
+        } else {
+            this.currentLink = null;
+        }
+
+        this.showPopup('link', rect, data, (result) => {
+            this.restoreSelection();
+            const targetAttr = result.target ? ` target="${result.target}"` : '';
+
+            if (this.currentLink) {
+                this.currentLink.href = result.url;
+                this.currentLink.innerText = result.text;
+                if (result.target) this.currentLink.target = result.target;
+                else this.currentLink.removeAttribute('target');
+            } else {
+                if (result.text && result.text !== window.getSelection().toString()) {
+                    this.cmd('insertHTML', `<a href="${result.url}"${targetAttr}>${result.text}</a>`);
+                } else {
+                    this.cmd('createLink', result.url);
+                    // Apply target to the newly created link
+                    if (result.target) {
+                        const selection = window.getSelection();
+                        if (selection.rangeCount > 0) {
+                            const anchor = selection.getRangeAt(0).startContainer.parentNode;
+                            if (anchor && anchor.tagName === 'A') {
+                                anchor.target = result.target;
+                            }
+                        }
+                    }
+                }
+            }
+        });
+    }
+
+    getSelectionAnchor() {
+        const sel = window.getSelection();
+        if (!sel.rangeCount) return null;
+        let node = sel.anchorNode;
+        while (node && node !== this.page) {
+            if (node.tagName === 'A') return node;
+            node = node.parentNode;
+        }
+        return null;
+    }
+
+    createPopup() {
+        this.popup = document.createElement('div');
+        this.popup.className = 'se-popup';
+        document.body.appendChild(this.popup);
+
+        // Global close
+        document.addEventListener('mousedown', (e) => {
+            if (this.popup.classList.contains('visible') && !this.popup.contains(e.target) && !e.target.closest('.se-btn-tool')) {
+                this.closePopup();
+            }
+        });
+
+        // Context Menu for Links/Images
+        this.page.addEventListener('click', (e) => {
+            const anchor = e.target.closest('a');
+            const img = e.target.closest('img');
+
+            if (anchor && this.page.contains(anchor)) {
+                e.preventDefault();
+                this.currentLink = anchor;
+                this.showPopup('link-actions', anchor.getBoundingClientRect(), { url: anchor.href });
+            } else if (img && this.page.contains(img)) {
+                this.currentImage = img;
+                this.showPopup('image-actions', img.getBoundingClientRect());
+            }
+        });
+    }
+
+    showPopup(type, rect, data = {}, onSave = null) {
+        let content = '';
+
+        if (type === 'link') {
+            content = `
+                <input type="text" id="se-popup-text" placeholder="Text to display" value="${data.text || ''}">
+                <input type="text" id="se-popup-url" placeholder="URL (https://...)" value="${data.url || ''}">
+                <label style="display:flex; align-items:center; gap:5px; font-size:12px; margin-bottom:5px;">
+                    <input type="checkbox" id="se-popup-target" ${data.target === '_blank' ? 'checked' : ''}> Open in new tab
+                </label>
+                <div class="se-popup-actions">
+                    <button type="button" class="se-btn-secondary" id="se-popup-cancel">Cancel</button>
+                    <button type="button" class="se-btn-primary" id="se-popup-save">Save</button>
+                </div>`;
+        } else if (type === 'image') {
+            content = `
+                <input type="text" id="se-popup-url" placeholder="Image URL (https://...)" value="${data.url || ''}">
+                <div class="se-popup-actions">
+                    <button type="button" class="se-btn-secondary" id="se-popup-cancel">Cancel</button>
+                    <button type="button" class="se-btn-primary" id="se-popup-save">Insert</button>
+                </div>`;
+        } else if (type === 'table') {
+            content = `
+                <input type="number" id="se-popup-rows" placeholder="Rows" value="3" min="1">
+                <input type="number" id="se-popup-cols" placeholder="Columns" value="3" min="1">
+                <div class="se-popup-actions">
+                    <button type="button" class="se-btn-secondary" id="se-popup-cancel">Cancel</button>
+                    <button type="button" class="se-btn-primary" id="se-popup-save">Insert</button>
+                </div>`;
+        } else if (type === 'link-actions') {
+            content = `
+                <div class="se-popup-tools">
+                    <a href="${data.url}" target="_blank" class="se-popup-preview">${data.url}</a>
+                    <button type="button" class="se-btn-secondary" id="se-popup-edit">Edit</button>
+                    <button type="button" class="se-btn-danger" id="se-popup-unlink">Unlink</button>
+                </div>`;
+        } else if (type === 'image-actions') {
+            content = `
+                <div class="se-popup-tools">
+                    <button type="button" class="se-btn-secondary" id="se-popup-edit">Edit</button>
+                    <button type="button" class="se-btn-danger" id="se-popup-delete">Delete</button>
+                </div>`;
+        } else if (type === 'menu') {
+            content = `
+                <div class="se-popup-tools" style="flex-direction: column; align-items: stretch; gap: 5px;">
+                    <button type="button" class="se-btn-secondary" id="se-menu-link">Link</button>
+                    <button type="button" class="se-btn-secondary" id="se-menu-table">Table</button>
+                </div>`;
+        } else if (type === 'lineHeight') {
+            content = `
+                <input type="text" id="se-popup-text" placeholder="Line Height (e.g. 1.5, 30px)" value="${data.value || ''}">
+                <div class="se-popup-actions">
+                    <button type="button" class="se-btn-secondary" id="se-popup-cancel">Cancel</button>
+                    <button type="button" class="se-btn-primary" id="se-popup-save">Apply</button>
+                </div>`;
+        } else if (type === 'pageSize') {
+            content = `
+                <input type="text" id="se-popup-width" placeholder="Width (e.g. 210mm)" value="${data.width || '210mm'}">
+                <input type="text" id="se-popup-height" placeholder="Height (e.g. 297mm)" value="${data.height || '297mm'}">
+                <div class="se-popup-actions">
+                    <button type="button" class="se-btn-secondary" id="se-popup-cancel">Cancel</button>
+                    <button type="button" class="se-btn-primary" id="se-popup-save">Apply</button>
+                </div>`;
+        } else if (type === 'margins') {
+            content = `
+                <input type="text" id="se-popup-text" placeholder="Margins (e.g. 25mm, 1in)" value="${data.value || ''}">
+                <div class="se-popup-actions">
+                    <button type="button" class="se-btn-secondary" id="se-popup-cancel">Cancel</button>
+                    <button type="button" class="se-btn-primary" id="se-popup-save">Apply</button>
+                </div>`;
+        } else if (type === 'paste') {
+            content = `
+                <div style="font-weight:600; margin-bottom:8px; font-size:14px; color:#333;">Paste Content</div>
+                <textarea id="se-popup-textarea" placeholder="Paste your content here..." style="width: 100%; height: 80px; margin-bottom: 10px; padding: 6px; border: 1px solid #ccc; border-radius: 3px; resize: vertical; box-sizing: border-box; font-family: sans-serif; font-size: 13px; display: block;"></textarea>
+                <div class="se-popup-actions">
+                    <button type="button" class="se-btn-secondary" id="se-popup-cancel">Cancel</button>
+                    <button type="button" class="se-btn-primary" id="se-popup-save">Paste</button>
+                </div>`;
+        }
+
+        this.popup.innerHTML = content;
+        this.popup.classList.add('visible');
+        this.container.classList.add('se-popup-active');
+
+        // Prevent clicking inside the popup from clearing editor selection
+        this.popup.onmousedown = (e) => e.stopPropagation();
+
+        // Position
+        // Position
+        const containerRect = this.container.getBoundingClientRect();
+
+        // Determine if we should center (if rect is invalid/missing)
+        const isRectValid = rect && rect.width > 0 && rect.height > 0;
+
+        // Approximate dimensions for clamping/centering (since it's just became visible)
+        // We could use this.popup.getBoundingClientRect() but it might need a tick.
+        // Let's rely on CSS max-width/defaults or just clamp safely.
+        const popupWidth = 280;
+        const popupHeight = 200;
+
+        let top, left;
+
+        if (!isRectValid) {
+            // Center in container
+            top = (containerRect.height - popupHeight) / 2;
+            left = (containerRect.width - popupWidth) / 2;
+        } else {
+            // Close to cursor (Absolute)
+            // Add window scroll since we are in body
+            top = rect.bottom + window.scrollY + 10;
+            left = rect.left + window.scrollX;
+        }
+
+        // Clamp to viewport/window bounds
+        const viewportWidth = window.innerWidth;
+        const viewportHeight = window.innerHeight;
+        const scrollX = window.scrollX;
+        const scrollY = window.scrollY;
+
+        // Ensure it doesn't go off screen
+        if (left + popupWidth > scrollX + viewportWidth) {
+            left = scrollX + viewportWidth - popupWidth - 10;
+        }
+        if (left < scrollX + 10) left = scrollX + 10;
+
+        // Ensure it doesn't go below screen (optional, maybe flip up?)
+        // For now, simple clamping to document bottom might be tricky without document height.
+        // Let's just trust valid coordinates + scroll.
+
+        // Legacy clamp removed in favor of viewport logic above
+        // if (top < 10) top = 10;
+        // if (top + popupHeight > containerRect.height) top = containerRect.height - popupHeight - 10;
+
+        this.popup.style.top = top + 'px';
+        this.popup.style.left = left + 'px';
+
+        // Bind Events
+        const saveBtn = this.popup.querySelector('#se-popup-save');
+        const cancelBtn = this.popup.querySelector('#se-popup-cancel');
+        const editBtn = this.popup.querySelector('#se-popup-edit');
+        const deleteBtn = this.popup.querySelector('#se-popup-unlink') || this.popup.querySelector('#se-popup-delete');
+
+        // Menu Events
+        const menuLink = this.popup.querySelector('#se-menu-link');
+        const menuImage = this.popup.querySelector('#se-menu-image');
+        const menuTable = this.popup.querySelector('#se-menu-table');
+
+        if (menuLink) menuLink.onclick = () => {
+            this.closePopup();
+            // Remove the '/' character? 
+            // Ideally we should select it and delete it, or just let insertLink handle selection
+            // For now, let's just open the tool. User can backspace if needed or we can automate.
+            // Automate: Select the '/' before cursor and delete it.
+            this.deleteSlash();
+            this.insertLink();
+        };
+        if (menuImage) menuImage.onclick = () => {
+            this.closePopup();
+            this.deleteSlash();
+            this.insertImage();
+        };
+        if (menuTable) menuTable.onclick = () => {
+            this.closePopup();
+            this.deleteSlash();
+            this.insertTable();
+        };
+
+        if (saveBtn) {
+            saveBtn.onmousedown = (e) => e.preventDefault(); // Prevent focus loss
+            saveBtn.onclick = () => {
+                const result = {};
+                if (this.popup.querySelector('#se-popup-url')) result.url = this.popup.querySelector('#se-popup-url').value;
+                if (this.popup.querySelector('#se-popup-text')) result.text = this.popup.querySelector('#se-popup-text').value;
+                if (this.popup.querySelector('#se-popup-textarea')) result.text = this.popup.querySelector('#se-popup-textarea').value;
+                if (this.popup.querySelector('#se-popup-rows')) result.rows = this.popup.querySelector('#se-popup-rows').value;
+                if (this.popup.querySelector('#se-popup-cols')) result.cols = this.popup.querySelector('#se-popup-cols').value;
+
+                // Custom Inputs
+                if (this.popup.querySelector('#se-popup-width')) result.width = this.popup.querySelector('#se-popup-width').value;
+                if (this.popup.querySelector('#se-popup-height')) result.height = this.popup.querySelector('#se-popup-height').value;
+                // General text input for simple prompts (Line Height, Margins)
+                // Fix: Always populate result.value if text input exists, as some handlers expect value (lineHeight) and some text (link)
+                if (this.popup.querySelector('#se-popup-text')) {
+                    const val = this.popup.querySelector('#se-popup-text').value;
+                    if (!result.text) result.text = val;
+                    result.value = val;
+                }
+
+                // Checkbox for Target
+                const targetCheck = this.popup.querySelector('#se-popup-target');
+                if (targetCheck) {
+                    result.target = targetCheck.checked ? '_blank' : '';
+                }
+
+                if (onSave) onSave(result);
+                this.closePopup();
+            };
+        }
+
+        if (cancelBtn) {
+            cancelBtn.onmousedown = (e) => e.preventDefault(); // Prevent focus loss
+            cancelBtn.onclick = () => this.closePopup();
+        }
+
+        if (deleteBtn) {
+            deleteBtn.onmousedown = (e) => e.preventDefault();
+            deleteBtn.onclick = () => {
+                if (type === 'link-actions') this.cmd('unlink');
+                if (type === 'image-actions') {
+                    if (this.currentImage) this.currentImage.remove();
+                }
+                this.closePopup();
+            };
+        }
+
+        if (editBtn) {
+            editBtn.onmousedown = (e) => e.preventDefault();
+            editBtn.onclick = () => {
+                const savedLink = this.currentLink;
+                const savedImage = this.currentImage;
+                this.closePopup();
+
+                if (type === 'link-actions') {
+                    this.currentLink = savedLink;
+                    this.insertLink();
+                }
+                if (type === 'image-actions') {
+                    this.currentImage = savedImage;
+                    this.insertImage();
+                }
+            };
+        }
+
+        // Action Buttons (Menu buttons)
+        [menuLink, menuImage, menuTable].forEach(btn => {
+            if (btn) btn.onmousedown = (e) => e.preventDefault();
+        });
+    }
+
+    closePopup() {
+        this.popup.classList.remove('visible');
+        this.container.classList.remove('se-popup-active');
+        this.currentLink = null;
+        this.currentImage = null;
+
+        // CRITICAL: Use setTimeout to allow click events to process before removing markers
+        // This prevents the "wrong selection" bug when cancelling
+        setTimeout(() => this.removeMarkers(), 10);
     }
 
     insertImage() {
-        const url = prompt("Enter Image URL:");
-        if (url) this.cmd('insertImage', url);
+        this.saveSelection();
+        const selection = window.getSelection();
+        const range = selection.rangeCount > 0 ? selection.getRangeAt(0) : null;
+        let rect;
+
+        if (this.currentImage) {
+            rect = this.currentImage.getBoundingClientRect();
+        } else {
+            rect = this.getSmartRect();
+        }
+
+        const data = { url: this.currentImage ? this.currentImage.src : '' };
+
+        this.showPopup('image', rect, data, (result) => {
+            if (result.url) {
+                this.restoreSelection();
+                if (this.currentImage) {
+                    this.currentImage.src = result.url;
+                } else {
+                    this.cmd('insertImage', result.url);
+                }
+            }
+        });
     }
 
     insertTable() {
-        const rows = prompt("Rows:", 3);
-        const cols = prompt("Columns:", 3);
+        this.saveSelection();
+        const selection = window.getSelection();
+        const rect = this.getSmartRect();
 
-        if (rows > 0 && cols > 0) {
-            let html = '<table style="width:100%; border-collapse: collapse; margin-bottom: 1em;"><tbody>';
-            for (let i = 0; i < rows; i++) {
-                html += '<tr>';
-                for (let j = 0; j < cols; j++) {
-                    html += '<td style="border: 1px solid #000; padding: 5px;">Cell</td>';
+        this.showPopup('table', rect, {}, (result) => {
+            if (result.rows > 0 && result.cols > 0) {
+                this.restoreSelection();
+                let html = '<table style="width:100%; border-collapse: collapse; margin-bottom: 1em;"><tbody>';
+                for (let i = 0; i < result.rows; i++) {
+                    html += '<tr>';
+                    for (let j = 0; j < result.cols; j++) {
+                        html += '<td style="border: 1px solid #000; padding: 5px;">Cell</td>';
+                    }
+                    html += '</tr>';
                 }
-                html += '</tr>';
+                html += '</tbody></table><p><br></p>';
+                this.cmd('insertHTML', html);
             }
-            html += '</tbody></table><p><br></p>';
-            this.cmd('insertHTML', html);
-        }
+        });
     }
 
     insertPageBreak() {
@@ -804,16 +1223,76 @@ class SEditor {
     }
 
     async pasteContent() {
+        this.saveSelection(); // Save immediately before async ops
         try {
             const text = await navigator.clipboard.readText();
             if (text) {
+                this.restoreSelection(); // Ensure focus/range is correct
                 this.cmd('insertText', text);
             }
         } catch (err) {
             // Fallback for browsers that block clipboard access or if permission denied
-            const text = prompt("Paste your text here:");
-            if (text) {
-                this.cmd('insertText', text);
+            // Use custom popup instead of prompt
+            const rect = this.getSmartRect();
+            this.showPopup('paste', rect, {}, (result) => {
+                if (result.text) {
+                    this.restoreSelection();
+                    this.cmd('insertText', result.text);
+                }
+            });
+        }
+    }
+
+    // Helper for smart popup positioning
+    getSmartRect() {
+        const selection = window.getSelection();
+        if (selection.rangeCount > 0) {
+            const range = selection.getRangeAt(0);
+            let rect = range.getBoundingClientRect();
+
+            // If rect is invalid (collapsed/caret), use temp element
+            if (rect.width === 0 && rect.height === 0) {
+                const span = document.createElement('span');
+                span.innerText = '|';
+                range.insertNode(span);
+                rect = span.getBoundingClientRect();
+                span.remove();
+
+            }
+
+            // Check if rect is valid
+            if (rect.top !== 0 && rect.left !== 0) {
+                return rect;
+            }
+        }
+        // Fallback to toolbar or center
+        return this.toolbar.getBoundingClientRect();
+    }
+
+    destroy() {
+        if (this.popup && this.popup.parentNode) {
+            this.popup.parentNode.removeChild(this.popup);
+        }
+        // Remove other listeners if needed (not tracked currently)
+    }
+
+    deleteSlash() {
+        const selection = window.getSelection();
+        if (selection.rangeCount > 0) {
+            const range = selection.getRangeAt(0);
+            const startNode = range.startContainer;
+            const startOffset = range.startOffset;
+
+            if (startNode.nodeType === 3 && startOffset > 0) {
+                const text = startNode.textContent;
+                if (text[startOffset - 1] === '/') {
+                    const newRange = document.createRange();
+                    newRange.setStart(startNode, startOffset - 1);
+                    newRange.setEnd(startNode, startOffset);
+                    selection.removeAllRanges();
+                    selection.addRange(newRange);
+                    document.execCommand('delete');
+                }
             }
         }
     }
@@ -837,21 +1316,282 @@ class SEditor {
 
     saveSelection() {
         const sel = window.getSelection();
+
+        // GUARD: If markers or visual guide already exist, do not overwrite
+        if (this.page.querySelector('#se-start-marker') || this.page.querySelector('#se-visual-guide') || this.page.querySelector('.se-visual-guide-part')) return;
+
         if (sel.rangeCount > 0) {
             const range = sel.getRangeAt(0);
+
             if (this.page.contains(range.commonAncestorContainer)) {
-                this.savedSelection = range;
+                // Check if we need robust saving (cross-block or complex)
+                if (this.isComplexSelection(range)) {
+                    this.saveSelectionRobust(range);
+                    return;
+                }
+
+                // Method A: Visual Wrapping (Best for UX, simple block)
+                if (!range.collapsed) {
+                    try {
+                        const span = document.createElement('span');
+                        span.id = 'se-visual-guide';
+                        range.surroundContents(span);
+                        this.savedSelection = range.cloneRange();
+                        return; // Success! Visual guide active.
+                    } catch (e) {
+                        // Fallback to Method B
+                        this.saveSelectionRobust(range);
+                        return;
+                    }
+                }
+
+                // Method C: Invisible Markers (Fallback)
+                this.saveSelectionMarkers(range);
             }
         }
     }
 
+    isComplexSelection(range) {
+        if (range.collapsed) return false;
+        // Check if common ancestor is the page itself (likely cross-block)
+        if (range.commonAncestorContainer === this.page) return true;
+
+        // Check if start/end are in different block elements
+        const getBlock = (n) => {
+            while (n && n !== this.page) {
+                if (['P', 'DIV', 'LI', 'H1', 'H2', 'H3', 'H4', 'H5', 'H6', 'TD', 'TH', 'PRE', 'BLOCKQUOTE'].includes(n.nodeName)) return n;
+                n = n.parentNode;
+            }
+            return this.page;
+        };
+        return getBlock(range.startContainer) !== getBlock(range.endContainer);
+    }
+
+    saveSelectionRobust(range) {
+        // Method B: Robust Multi-Node Wrapping
+        const treeWalker = document.createTreeWalker(
+            range.commonAncestorContainer,
+            NodeFilter.SHOW_TEXT,
+            {
+                acceptNode: (node) => {
+                    return range.intersectsNode(node) ? NodeFilter.FILTER_ACCEPT : NodeFilter.FILTER_REJECT;
+                }
+            }
+        );
+
+        const nodes = [];
+        let currentNode;
+        while (currentNode = treeWalker.nextNode()) {
+            nodes.push(currentNode);
+        }
+
+        if (nodes.length === 0) {
+            this.saveSelectionMarkers(range);
+            return;
+        }
+
+        let wrappedCount = 0;
+        nodes.forEach(node => {
+            const rangePart = document.createRange();
+            rangePart.selectNodeContents(node);
+
+            // Intersect with original range
+            if (range.compareBoundaryPoints(Range.START_TO_START, rangePart) > 0) {
+                rangePart.setStart(range.startContainer, range.startOffset);
+            }
+            if (range.compareBoundaryPoints(Range.END_TO_END, rangePart) < 0) {
+                rangePart.setEnd(range.endContainer, range.endOffset);
+            }
+
+            if (!rangePart.collapsed) {
+                const span = document.createElement('span');
+                span.className = 'se-visual-guide-part';
+                try {
+                    rangePart.surroundContents(span);
+                    wrappedCount++;
+                } catch (e) {
+                    // Ignore errors
+                }
+            }
+        });
+
+        if (wrappedCount > 0) {
+            this.savedSelection = range.cloneRange();
+        } else {
+            this.saveSelectionMarkers(range);
+        }
+    }
+
+    saveSelectionMarkers(range) {
+        const startMarker = document.createElement('span');
+        startMarker.id = 'se-start-marker';
+
+        const endMarker = document.createElement('span');
+        endMarker.id = 'se-end-marker';
+
+        // Insert markers (End first)
+        const endRange = range.cloneRange();
+        endRange.collapse(false);
+        endRange.insertNode(endMarker);
+
+        const startRange = range.cloneRange();
+        startRange.collapse(true);
+        startRange.insertNode(startMarker);
+
+        this.savedSelection = range.cloneRange();
+    }
+
     restoreSelection() {
-        if (this.savedSelection) {
-            this.page.focus({ preventScroll: true });
+        // Option A: Visual Guide (Simple)
+        const manualGuide = this.page.querySelector('#se-visual-guide');
+        if (manualGuide) {
+            this.page.focus();
+
+            // Capture text node reference BEFORE unwrapping
+            let firstChild = manualGuide.firstChild;
+            let lastChild = manualGuide.lastChild;
+
+            // Unwrap
+            this.unwrap(manualGuide);
+
+            // Ensure we are targeting text nodes if possible
+            if (firstChild && firstChild.nodeType !== 3 && firstChild.firstChild) firstChild = firstChild.firstChild;
+            if (lastChild && lastChild.nodeType !== 3 && lastChild.lastChild) lastChild = lastChild.lastChild;
+
+            if (firstChild) {
+                const sel = window.getSelection();
+                sel.removeAllRanges();
+                const range = document.createRange();
+
+                try {
+                    range.setStart(firstChild, 0);
+                    if (lastChild && lastChild.nodeType === 3) {
+                        range.setEnd(lastChild, lastChild.length);
+                    } else if (lastChild) {
+                        range.setEndAfter(lastChild);
+                    } else {
+                        // Fallback if only firstChild exists
+                        if (firstChild.nodeType === 3) range.setEnd(firstChild, firstChild.length);
+                        else range.setEndAfter(firstChild);
+                    }
+                    sel.addRange(range);
+                    this.savedSelection = range.cloneRange();
+                } catch (e) {
+                    console.error("Restore failed", e);
+                }
+            }
+            return;
+        }
+
+        // Option B: Visual Guide Parts (Robust)
+        const parts = this.page.querySelectorAll('.se-visual-guide-part');
+        if (parts.length > 0) {
+            this.page.focus();
+
+            const firstPart = parts[0];
+            const lastPart = parts[parts.length - 1];
+
+            // Capture text nodes (they are often the first child of the wrapper span)
+            let startNode = firstPart.firstChild;
+            let endNode = lastPart.firstChild;
+
+            parts.forEach(part => {
+                this.unwrap(part);
+            });
+
+            // Ensure we are targeting text nodes
+            // If the startNode was a text node, it persists.
+
+            if (startNode && endNode) {
+                try {
+                    const range = document.createRange();
+
+                    // Validate nodes are still in blocked DOM (they should be)
+                    // If startNode isn't text (unlikely for our robust saver), try to find text
+                    if (startNode.nodeType !== 3 && startNode.firstChild) startNode = startNode.firstChild;
+                    if (endNode.nodeType !== 3 && endNode.lastChild) endNode = endNode.lastChild;
+
+                    range.setStart(startNode, 0);
+                    if (endNode.nodeType === 3) {
+                        range.setEnd(endNode, endNode.length);
+                    } else {
+                        range.setEndAfter(endNode);
+                    }
+
+                    const sel = window.getSelection();
+                    sel.removeAllRanges();
+                    sel.addRange(range);
+                    this.savedSelection = range.cloneRange();
+                } catch (e) {
+                    console.error("Restore robust failed", e);
+                }
+            }
+            return;
+        }
+
+        const startMarker = this.page.querySelector('#se-start-marker');
+        const endMarker = this.page.querySelector('#se-end-marker');
+
+        if (startMarker && endMarker) {
+            this.page.focus();
+
+            const sel = window.getSelection();
+            sel.removeAllRanges();
+
+            const range = document.createRange();
+            range.setStartAfter(startMarker);
+            range.setEndBefore(endMarker);
+
+            sel.addRange(range);
+
+            // Update the clone while markers are still in DOM
+            this.savedSelection = range.cloneRange();
+
+            // CRITICAL: Delay marker removal slightly to let the browser "paint" the selection
+            // This prevents the visual flicker or "deselection" bug
+            setTimeout(() => {
+                const s = this.page.querySelector('#se-start-marker');
+                const e = this.page.querySelector('#se-end-marker');
+                if (s) s.remove();
+                if (e) e.remove();
+            }, 10);
+
+        } else if (this.savedSelection) {
+            // Fallback for cases where markers might have been stripped
+            this.page.focus();
             const sel = window.getSelection();
             sel.removeAllRanges();
             sel.addRange(this.savedSelection);
+        } else {
+            // No saved selection (e.g. first time use) -> Focus editor at end
+            this.page.focus();
+            const range = document.createRange();
+            range.selectNodeContents(this.page);
+            range.collapse(false);
+            const sel = window.getSelection();
+            sel.removeAllRanges();
+            sel.addRange(range);
         }
+    }
+
+    removeMarkers() {
+        const markers = this.page.querySelectorAll('#se-start-marker, #se-end-marker');
+        markers.forEach(m => m.remove());
+
+        // Unwrap Visual Guide (without selecting)
+        const guide = this.page.querySelector('#se-visual-guide');
+        if (guide) {
+            this.unwrap(guide);
+        }
+
+        // Unwrap Visual Guide Parts
+        this.page.querySelectorAll('.se-visual-guide-part').forEach(part => this.unwrap(part));
+    }
+
+    unwrap(el) {
+        const parent = el.parentNode;
+        while (el.firstChild) parent.insertBefore(el.firstChild, el);
+        parent.removeChild(el);
     }
 
 
@@ -888,5 +1628,23 @@ class SEditor {
         });
 
         return div.innerHTML;
+    }
+
+    deleteSlash() {
+        const sel = window.getSelection();
+        if (sel.rangeCount > 0) {
+            const range = sel.getRangeAt(0);
+            // Check if character before is '/'
+            const startNode = range.startContainer;
+            const startOffset = range.startOffset;
+
+            if (startNode.nodeType === 3 && startOffset > 0) {
+                const text = startNode.textContent;
+                if (text[startOffset - 1] === '/') {
+                    range.setStart(startNode, startOffset - 1);
+                    range.deleteContents();
+                }
+            }
+        }
     }
 }

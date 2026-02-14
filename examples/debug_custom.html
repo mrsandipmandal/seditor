@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SEditor Custom Feature Debug</title>
+    <link rel="stylesheet" href="../assets/seditor.css">
+    <style>
+        body {
+            font-family: sans-serif;
+            padding: 20px;
+        }
+
+        #editor-container {
+            margin-bottom: 20px;
+            border: 1px solid #ccc;
+            min-height: 200px;
+        }
+
+        .controls {
+            margin-top: 10px;
+        }
+
+        button {
+            margin-right: 5px;
+            padding: 5px 10px;
+            cursor: pointer;
+        }
+
+        #log {
+            margin-top: 20px;
+            padding: 10px;
+            background: #f0f0f0;
+            border: 1px solid #ddd;
+            max-height: 200px;
+            overflow-y: auto;
+            font-family: monospace;
+            white-space: pre-wrap;
+        }
+
+        .status {
+            font-weight: bold;
+        }
+
+        .success {
+            color: green;
+        }
+
+        .error {
+            color: red;
+        }
+    </style>
+</head>
+
+<body>
+
+    <h1>SEditor Custom Feature Debug</h1>
+    <p>Test if custom features (Font Size, Line Height, Colors) work correctly after selection restore.</p>
+
+    <div id="editor-container">
+        <p>Select this text and try applying a custom feature.</p>
+        <p>Try selecting across this paragraph boundary too.</p>
+        <p>And apply a style.</p>
+    </div>
+
+    <div class="controls">
+        <button onclick="applyFontSize()">1. Apply Font Size (36pt)</button>
+        <button onclick="applyLineHeight()">2. Apply Line Height (2.0)</button>
+        <button onclick="applyLineHeightCustom()">2b. Apply Custom Line Height (Simulated)</button>
+        <button onclick="applyBold()">3. Apply Bold (ExecCommand)</button>
+        <button onclick="applyTextColor()">4. Apply Text Color (Red)</button>
+        <button onclick="applyHighlightColor()">5. Apply Highlight Color (Yellow)</button>
+        <button onclick="applyBothColors()">6. Apply Both (Blue/Pink)</button>
+        <hr>
+        <button onclick="checkSelection()">Check Selection</button>
+        <button onclick="editor.saveSelection()">Manually Save Selection</button>
+        <button onclick="editor.restoreSelection()">Manually Restore Selection</button>
+    </div>
+
+    <div id="log"></div>
+
+    <script src="../assets/seditor.js"></script>
+    <script>
+        const editor = new SEditor('#editor-container', {
+            placeholder: 'Type something...'
+        });
+
+        function log(msg, type = 'info') {
+            const el = document.getElementById('log');
+            const div = document.createElement('div');
+            div.textContent = `[${new Date().toLocaleTimeString()}] ${msg}`;
+            if (type === 'error') div.style.color = 'red';
+            if (type === 'success') div.style.color = 'green';
+            el.appendChild(div);
+            el.scrollTop = el.scrollHeight;
+            console.log(msg);
+        }
+
+        function applyFontSize() {
+            log('Attempting to apply Font Size 36pt...');
+            editor.saveSelection();
+            setTimeout(() => {
+                editor.restoreSelection();
+                editor.setFontSize(36);
+                log('Command executed.');
+            }, 500);
+        }
+
+        function applyLineHeight() {
+            log('Attempting to apply Line Height 2.0...');
+            editor.saveSelection();
+            setTimeout(() => {
+                editor.restoreSelection();
+                editor.setLineHeight('2.0');
+                log('Line Height applied.');
+            }, 500);
+        }
+
+        function applyLineHeightCustom() {
+            log('Attempting to apply Custom Line Height (Simulated)...');
+            editor.saveSelection();
+            log('Selection saved. Simulate Popup interaction...');
+            setTimeout(() => {
+                editor.restoreSelection();
+                log('Selection restored. Calling setLineHeight with value 3.0 and savedSelection...');
+                // Simulate what the popup callback does:
+                editor.setLineHeight('3.0', editor.savedSelection);
+                log('Custom Line Height applied.');
+            }, 1000);
+        }
+
+        function applyBold() {
+            log('Attempting to apply Bold...');
+            editor.saveSelection();
+            setTimeout(() => {
+                editor.restoreSelection();
+                editor.cmd('bold');
+                log('Bold command executed.');
+            }, 500);
+        }
+
+        function applyTextColor() {
+            log('Attempting to apply Text Color (Red)...');
+            editor.saveSelection();
+            setTimeout(() => {
+                editor.restoreSelection();
+                editor.cmd('foreColor', '#ff0000');
+                log('Text Color applied.');
+            }, 500);
+        }
+
+        function applyHighlightColor() {
+            log('Attempting to apply Highlight Color (Yellow)...');
+            editor.saveSelection();
+            setTimeout(() => {
+                editor.restoreSelection();
+                editor.cmd('hiliteColor', '#ffff00');
+                log('Highlight Color applied.');
+            }, 500);
+        }
+
+        function applyBothColors() {
+            log('Attempting to apply BOTH Text (Blue) and Highlight (Pink)...');
+            editor.saveSelection();
+            setTimeout(() => {
+                editor.restoreSelection();
+                editor.cmd('foreColor', '#0000ff');
+                log('Text Color applied. Waiting 200ms...');
+                setTimeout(() => {
+                    editor.cmd('hiliteColor', '#ffc0cb');
+                    log('Highlight Color done.');
+                }, 200);
+            }, 500);
+        }
+
+        function checkSelection() {
+            const sel = window.getSelection();
+            if (sel.rangeCount > 0) {
+                const range = sel.getRangeAt(0);
+                log(`Current Selection: "${sel.toString()}" in ${range.commonAncestorContainer.nodeName}`);
+            } else {
+                log('No selection found.', 'error');
+            }
+        }
+    </script>
+</body>
+
+</html>

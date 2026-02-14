@@ -843,8 +843,8 @@ class SEditor {
                 </div>`;
         } else if (type === 'table') {
             content = `
-                <input type="number" id="se-popup-rows" placeholder="Rows" value="3" min="1">
-                <input type="number" id="se-popup-cols" placeholder="Columns" value="3" min="1">
+                <input type="number" id="se-popup-rows" placeholder="Rows" value="" min="1">
+                <input type="number" id="se-popup-cols" placeholder="Columns" value="" min="1">
                 <div class="se-popup-actions">
                     <button type="button" class="se-btn-secondary" id="se-popup-cancel">Cancel</button>
                     <button type="button" class="se-btn-primary" id="se-popup-save">Insert</button>
@@ -870,22 +870,22 @@ class SEditor {
                 </div>`;
         } else if (type === 'lineHeight') {
             content = `
-                <input type="text" id="se-popup-text" placeholder="Line Height (e.g. 1.5, 30px)" value="${data.value || ''}">
+                <input type="text" id="se-popup-text" placeholder="Line Height (e.g. 1.5, 30px)" value="">
                 <div class="se-popup-actions">
                     <button type="button" class="se-btn-secondary" id="se-popup-cancel">Cancel</button>
                     <button type="button" class="se-btn-primary" id="se-popup-save">Apply</button>
                 </div>`;
         } else if (type === 'pageSize') {
             content = `
-                <input type="text" id="se-popup-width" placeholder="Width (e.g. 210mm)" value="${data.width || '210mm'}">
-                <input type="text" id="se-popup-height" placeholder="Height (e.g. 297mm)" value="${data.height || '297mm'}">
+                <input type="text" id="se-popup-width" placeholder="Width (e.g. 210mm)" value="">
+                <input type="text" id="se-popup-height" placeholder="Height (e.g. 297mm)" value="">
                 <div class="se-popup-actions">
                     <button type="button" class="se-btn-secondary" id="se-popup-cancel">Cancel</button>
                     <button type="button" class="se-btn-primary" id="se-popup-save">Apply</button>
                 </div>`;
         } else if (type === 'margins') {
             content = `
-                <input type="text" id="se-popup-text" placeholder="Margins (e.g. 25mm, 1in)" value="${data.value || ''}">
+                <input type="text" id="se-popup-text" placeholder="Margins (e.g. 25mm, 1in)" value="">
                 <div class="se-popup-actions">
                     <button type="button" class="se-btn-secondary" id="se-popup-cancel">Cancel</button>
                     <button type="button" class="se-btn-primary" id="se-popup-save">Apply</button>

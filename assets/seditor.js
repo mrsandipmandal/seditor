@@ -747,6 +747,7 @@ class SEditor {
         if (anchor) {
             data.url = anchor.getAttribute('href');
             data.text = anchor.innerText;
+            data.target = anchor.getAttribute('target'); // Fix: Read target attribute
             this.currentLink = anchor;
         } else {
             this.currentLink = null;
@@ -1027,7 +1028,17 @@ class SEditor {
         if (deleteBtn) {
             deleteBtn.onmousedown = (e) => e.preventDefault();
             deleteBtn.onclick = () => {
-                if (type === 'link-actions') this.cmd('unlink');
+                if (type === 'link-actions') {
+                    // Fix: Ensure link is selected before unlinking
+                    if (this.currentLink) {
+                        const range = document.createRange();
+                        range.selectNode(this.currentLink);
+                        const sel = window.getSelection();
+                        sel.removeAllRanges();
+                        sel.addRange(range);
+                    }
+                    this.cmd('unlink');
+                }
                 if (type === 'image-actions') {
                     if (this.currentImage) this.currentImage.remove();
                 }

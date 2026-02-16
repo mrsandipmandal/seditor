@@ -82,7 +82,9 @@ const ICONS = {
 
     vertical_align_top: '<path d="M8 11h3v10h2V11h3l-4-4-4 4zM4 3v2h16V3H4z"/>',
     vertical_align_center: '<path d="M8 19h3v4h2v-4h3l-4-4-4 4zm8-14h-3V1h-2v4H8l4 4 4-4zM4 11v2h16v-2H4z"/>',
-    vertical_align_bottom: '<path d="M16 13h-3V3h-2v10H8l4 4 4-4zM4 19v2h16v-2H4z"/>'
+    vertical_align_bottom: '<path d="M16 13h-3V3h-2v10H8l4 4 4-4zM4 19v2h16v-2H4z"/>',
+    fullscreen: '<path d="M7 14H5v5h5v-2H7v-3zm-2-4h2V7h3V5H5v5zm12 7h-3v2h5v-5h-2v3zM14 5v2h3v3h2V5h-5z"/>',
+    fullscreen_exit: '<path d="M5 16h3v3h2v-5H5v2zm3-8H5v2h5V5H8v3zm6 11h2v-3h3v-2h-5v5zm2-11V5h-2v5h5V8h-3z"/>'
 };
 
 class SEditor {
@@ -161,42 +163,32 @@ class SEditor {
         // Copy Button
         const btnCopy = document.createElement('button');
         btnCopy.className = 'se-btn-source-action';
-        btnCopy.innerHTML = `<svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor">${ICONS.content_paste || '<path d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"/>'}</svg> Copy`;
+        btnCopy.title = 'Copy Minified HTML';
+        btnCopy.innerHTML = `<svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor">${ICONS.content_paste || '<path d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"/>'}</svg>`;
         btnCopy.onclick = () => {
-             // User wants "min format" for efficiency
-             const minified = this.minifyHTML(this.page.innerHTML);
-             
-             // Temporarily set value to minified to copy it
-             const currentVal = this.sourceArea.value;
-             this.sourceArea.value = minified;
              this.sourceArea.select();
-             document.execCommand('copy');
-             
-             // Restore view
-             this.sourceArea.value = currentVal;
-             
-            // Visual feedback
-            const originalText = btnCopy.innerHTML;
-            btnCopy.innerHTML = 'Copied Minified!';
-            setTimeout(() => btnCopy.innerHTML = originalText, 1500);
+             const textToCopy = this.sourceArea.value;
+
+             if (navigator.clipboard) {
+                 navigator.clipboard.writeText(textToCopy).then(() => {
+                     showFeedback();
+                 }).catch(err => {
+                     // Fallback
+                     document.execCommand('copy');
+                     showFeedback();
+                 });
+             } else {
+                 document.execCommand('copy');
+                 showFeedback();
+             }
+
+             function showFeedback() {
+                 const originalHTML = btnCopy.innerHTML;
+                 btnCopy.innerHTML = `<svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>`; // Checkmark
+                 setTimeout(() => btnCopy.innerHTML = originalHTML, 1500);
+             }
         };
 
-        // Minify/Format Toggle
-        const btnFormat = document.createElement('button');
-        btnFormat.className = 'se-btn-source-action';
-        btnFormat.innerHTML = `<svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor"><path d="M9.4 16.6L4.8 12l4.6-4.6L8 6l-6 6 6 6 1.4-1.4zm5.2 0l4.6-4.6-4.6-4.6L16 6l6 6-6 6-1.4-1.4z"/></svg> Minify`;
-        btnFormat.onclick = () => {
-            const current = this.sourceArea.value;
-            if (btnFormat.innerText.trim() === 'Minify') {
-                this.sourceArea.value = this.minifyHTML(current);
-                btnFormat.innerHTML = `<svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor"><path d="M9.4 16.6L4.8 12l4.6-4.6L8 6l-6 6 6 6 1.4-1.4zm5.2 0l4.6-4.6-4.6-4.6L16 6l6 6-6 6-1.4-1.4z"/></svg> Format`;
-            } else {
-                this.sourceArea.value = this.formatHTML(current);
-                btnFormat.innerHTML = `<svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor"><path d="M9.4 16.6L4.8 12l4.6-4.6L8 6l-6 6 6 6 1.4-1.4zm5.2 0l4.6-4.6-4.6-4.6L16 6l6 6-6 6-1.4-1.4z"/></svg> Minify`;
-            }
-        };
-
-        this.sourceToolbar.appendChild(btnFormat);
         this.sourceToolbar.appendChild(btnCopy);
 
         // Load initial content
@@ -233,10 +225,26 @@ class SEditor {
         });
 
         // Tab Handling
+        // Tab Handling & Shortcuts
         this.page.addEventListener('keydown', (e) => {
             if (e.key === 'Tab') {
                 e.preventDefault();
                 this.cmd('insertHTML', '&nbsp;&nbsp;&nbsp;&nbsp;');
+            }
+            
+            // Undo / Redo Shortcuts
+            if ((e.ctrlKey || e.metaKey) && !e.altKey) {
+                if (e.key.toLowerCase() === 'z') {
+                    e.preventDefault();
+                    if (e.shiftKey) {
+                        this.redo();
+                    } else {
+                        this.undo();
+                    }
+                } else if (e.key.toLowerCase() === 'y') {
+                    e.preventDefault();
+                    this.redo();
+                }
             }
         });
 
@@ -357,8 +365,9 @@ class SEditor {
                     { icon: 'code', action: () => this.toggleSource(), title: 'View Source', id: 'se-btn-source' },
                     { icon: 'content_paste', action: () => this.pasteContent(), title: 'Paste' },
                     { icon: 'print', action: () => this.printEditor(), title: 'Print' },
-                    { icon: 'undo', action: () => this.undo(), title: 'Undo' },
-                    { icon: 'redo', action: () => this.redo(), title: 'Redo' }
+                    { icon: 'undo', action: () => this.undo(), title: 'Undo (Ctrl+Z)' },
+                    { icon: 'redo', action: () => this.redo(), title: 'Redo (Ctrl+Y)' },
+                    { icon: 'fullscreen', action: () => this.toggleFullScreen(), title: 'Enter fullscreen mode' }   
                 ]
             },
             {
@@ -573,14 +582,11 @@ class SEditor {
         if (this.sourceArea.style.display === 'none') {
             // Switch to Source
             const raw = this.page.innerHTML;
-            this.sourceArea.value = this.formatHTML(raw);
+            const processed = this.processExportHTML(raw);
+            this.sourceArea.value = this.minifyHTML(processed); // Always minified
             this.sourceArea.style.display = 'block';
             this.sourceToolbar.style.display = 'flex'; // Show toolbar
             this.page.style.display = 'none';
-
-            // Reset Format button text
-             const btnFormat = this.sourceToolbar.querySelector('button:first-child');
-             if(btnFormat) btnFormat.innerHTML = `<svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor"><path d="M9.4 16.6L4.8 12l4.6-4.6L8 6l-6 6 6 6 1.4-1.4zm5.2 0l4.6-4.6-4.6-4.6L16 6l6 6-6 6-1.4-1.4z"/></svg> Minify`;
 
             const btn = this.container.querySelector('#se-btn-source');
             if (btn) btn.classList.add('se-active');
@@ -599,6 +605,38 @@ class SEditor {
 
             this.setToolbarDisabled(false);
         }
+    }
+
+    processExportHTML(html) {
+        const div = document.createElement('div');
+        div.innerHTML = html;
+        
+        // Ensure tables have inline styles for portability (CKEditor style)
+        div.querySelectorAll('table').forEach(table => {
+            if (!table.style.width) table.style.width = '100%';
+            if (!table.style.borderCollapse) table.style.borderCollapse = 'collapse';
+            
+            // Apply caption style if present
+            const caption = table.querySelector('caption');
+            if (caption) {
+                // Inline default caption styles
+                if (!caption.style.fontWeight) caption.style.fontWeight = 'bold';
+                if (!caption.style.padding) caption.style.padding = '10px';
+                if (!caption.style.textAlign) caption.style.textAlign = 'center';
+                if (!caption.style.backgroundColor) caption.style.backgroundColor = '#f8f9fa';
+                if (!caption.style.border) caption.style.border = '1px solid #ddd';
+                if (!caption.style.borderRadius) caption.style.borderRadius = '4px';
+                if (!caption.style.marginBottom) caption.style.marginBottom = '8px';
+            }
+
+            // Apply cell borders if missing
+            table.querySelectorAll('td, th').forEach(cell => {
+                if (!cell.style.border) cell.style.border = '1px solid #000';
+                if (!cell.style.padding) cell.style.padding = '5px';
+            });
+        });
+        
+        return div.innerHTML;
     }
 
     formatHTML(html) {
@@ -633,18 +671,33 @@ class SEditor {
     }
 
     minifyHTML(html) {
-        return html
-            .replace(/>\s+</g, '><')
-            .replace(/\s{2,}/g, ' ')
-            .trim();
+        // Safer minification: only remove whitespace between tags
+        // Avoid collapsing whitespace inside text nodes or attributes excessively
+        return html.replace(/>\s+</g, '><').trim();
     }
 
     setToolbarDisabled(disabled) {
-        const tools = this.toolbar.querySelectorAll('button, select, input');
+        // Disable buttons, inputs, selects AND custom dropdown toggles (.se-btn-tool)
+        const tools = this.toolbar.querySelectorAll('button, select, input, .se-btn-tool, .se-dropdown');
         tools.forEach(tool => {
-            if (tool.id !== 'se-btn-source') {
-                tool.disabled = disabled;
-                tool.style.opacity = disabled ? '0.5' : '1';
+            // Skip the source button itself
+            if (tool.id === 'se-btn-source' || tool.closest('#se-btn-source')) return;
+
+            if (disabled) {
+                // For form elements
+                if (tool.tagName === 'BUTTON' || tool.tagName === 'SELECT' || tool.tagName === 'INPUT') {
+                    tool.disabled = true;
+                }
+                // For all elements (including custom divs)
+                tool.style.opacity = '0.5';
+                tool.style.pointerEvents = 'none';
+            } else {
+                // Enable
+                if (tool.tagName === 'BUTTON' || tool.tagName === 'SELECT' || tool.tagName === 'INPUT') {
+                    tool.disabled = false;
+                }
+                tool.style.opacity = '1';
+                tool.style.pointerEvents = ''; // Restore default
             }
         });
     }
@@ -1812,6 +1865,24 @@ class SEditor {
         this.cmd('insertHTML', html);
     }
 
+    toggleFullScreen() {
+        this.container.classList.toggle('se-fullscreen');
+        const isFull = this.container.classList.contains('se-fullscreen');
+        
+        const buttons = this.toolbar.querySelectorAll('.se-btn-tool');
+        buttons.forEach(btn => {
+             if (btn.title === 'Enter fullscreen mode' || btn.title === 'Exit fullscreen mode') {
+                 if (isFull) {
+                     btn.title = 'Exit fullscreen mode';
+                     btn.innerHTML = `<svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor">${ICONS.fullscreen_exit || '<path d="M5 16h3v3h2v-5H5v2zm3-8H5v2h5V5H8v3zm6 11h2v-3h3v-2h-5v5zm2-11V5h-2v5h5V8h-3z"/>'}</svg>`;
+                 } else {
+                     btn.title = 'Enter fullscreen mode';
+                     btn.innerHTML = `<svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor">${ICONS.fullscreen || '<path d="M7 14H5v5h5v-2H7v-3zm-2-4h2V7h3V5H5v5zm12 7h-3v2h5v-5h-2v3zM14 5v2h3v3h2V5h-5z"/>'}</svg>`;
+                 }
+             }
+        });
+    }
+
     sortSelection() {
         const selection = window.getSelection();
         if (!selection.rangeCount) return;
@@ -2636,6 +2707,48 @@ class SEditor {
                     range.deleteContents();
                 }
             }
+        }
+    }
+
+    saveState() {
+        // Debounce or check if content changed?
+        const currentHTML = this.page.innerHTML;
+        
+        // If stack is ahead of current index, cut it (new branch)
+        if (this.historyIndex < this.historyStack.length - 1) {
+            this.historyStack = this.historyStack.slice(0, this.historyIndex + 1);
+        }
+
+        // Avoid duplicate states if possible
+        if (this.historyStack.length > 0 && this.historyStack[this.historyIndex] === currentHTML) {
+            return;
+        }
+
+        this.historyStack.push(currentHTML);
+        this.historyIndex++;
+        
+        // Limit stack size
+        if (this.historyStack.length > 50) {
+            this.historyStack.shift();
+            this.historyIndex--;
+        }
+    }
+
+    undo() {
+        if (this.historyIndex > 0) {
+            this.historyIndex--;
+            const html = this.historyStack[this.historyIndex];
+            this.page.innerHTML = html;
+            this.updateOriginal();
+        }
+    }
+
+    redo() {
+        if (this.historyIndex < this.historyStack.length - 1) {
+            this.historyIndex++;
+            const html = this.historyStack[this.historyIndex];
+            this.page.innerHTML = html;
+            this.updateOriginal();
         }
     }
 }

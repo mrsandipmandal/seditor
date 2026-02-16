@@ -331,10 +331,40 @@
     font-family: 'Courier New', monospace;
     font-size: 14px;
     padding: 20px;
+    padding-top: 50px; /* Space for toolbar */
     border: 1px solid #ddd;
     resize: none;
     outline: none;
     min-height: 200px;
+}
+
+/* Source View Toolbar */
+.se-source-toolbar {
+    position: absolute;
+    top: 10px;
+    right: 25px; /* Scrollbar space */
+    display: flex;
+    gap: 8px;
+    z-index: 100;
+}
+
+.se-btn-source-action {
+    background: #f0f0f0;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    padding: 4px 10px;
+    font-size: 12px;
+    cursor: pointer;
+    font-family: sans-serif;
+    color: #333;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+
+.se-btn-source-action:hover {
+    background: #e0e0e0;
+    border-color: #bbb;
 }
 
 /* Responsive */
@@ -417,7 +447,8 @@ hr.se-page-break {
     border-radius: 4px;
     font-family: sans-serif;
     font-size: 13px;
-    width: 260px;
+    width: auto; /* Allow auto width for toolbar */
+    min-width: 200px;
     /* Compact width */
     display: none;
 }
@@ -521,4 +552,271 @@ hr.se-page-break {
     color: inherit !important;
     text-decoration: inherit !important;
     display: inline;
+}
+
+/* Table Hover Effects */
+.se-page-content table.se-table-hover {
+    outline: 2px solid #ffca28; /* Yellow outline */
+    position: relative;
+    cursor: default;
+}
+
+/* Paragraph Insertion Handles */
+.se-table-handle {
+    position: absolute;
+    width: 24px;
+    height: 24px;
+    background: #fff;
+    border: 1px solid #ccc;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    z-index: 101;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    color: #444;
+}
+
+.se-table-handle:hover {
+    background: #f0f0f0;
+    color: #1a73e8;
+}
+
+.se-table-handle-top {
+    top: -12px;
+    left: 50%;
+    transform: translateX(-50%);
+}
+
+.se-table-handle-bottom {
+    bottom: -12px;
+    left: 50%;
+    transform: translateX(-50%);
+}
+
+.se-table-handle-menu {
+    top: -12px;
+    left: -12px;
+}
+
+/* Enhanced Popup Menus */
+.se-popup-menu-list {
+    display: flex;
+    flex-direction: column;
+    width: 200px;
+}
+
+.se-menu-item {
+    padding: 8px 12px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    font-size: 13px;
+    color: #333;
+    border-radius: 3px;
+}
+
+.se-menu-item:hover {
+    background-color: #f5f5f5;
+    color: #1a73e8;
+}
+
+.se-menu-item svg {
+    margin-right: 8px;
+    flex-shrink: 0;
+}
+
+.se-menu-arrow {
+    margin-left: auto;
+    color: #999;
+}
+
+/* Horizontal Table Toolbar (New) */
+.se-table-toolbar {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    padding: 4px;
+    background: #fff;
+    border-radius: 4px;
+    /* width: auto;  Let it grow */
+    width: max-content; 
+}
+
+.se-toolbar-group-btn {
+    display: flex;
+    align-items: center;
+    padding: 6px;
+    cursor: pointer;
+    border-radius: 4px;
+    color: #555;
+    transition: background 0.2s;
+}
+
+.se-toolbar-group-btn:hover {
+    background-color: #f0f0f0;
+    color: #1a73e8;
+}
+
+.se-toolbar-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 6px;
+    cursor: pointer;
+    border-radius: 4px;
+    color: #555;
+    transition: background 0.2s;
+}
+
+.se-toolbar-btn:hover {
+    background-color: #f0f0f0;
+    color: #1a73e8;
+}
+
+.se-toolbar-arrow {
+    font-size: 10px;
+    margin-left: 4px;
+    color: #999;
+}
+
+.se-toolbar-separator {
+    width: 1px;
+    height: 20px;
+    background: #eee;
+    margin: 0 4px;
+}
+
+.se-menu-back {
+    padding: 8px 12px;
+    cursor: pointer;
+    border-bottom: 1px solid #eee;
+    margin-bottom: 4px;
+    font-weight: 600;
+    color: #555;
+    display: flex;
+    align-items: center;
+}
+
+.se-menu-back:hover {
+    background-color: #f5f5f5;
+    color: #333;
+}
+
+.se-menu-divider {
+    height: 1px;
+    background: #eee;
+    margin: 4px 0;
+}
+
+/* Properties Form Grid */
+.se-props-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+    margin-bottom: 8px;
+}
+
+.se-props-row {
+    grid-column: span 2;
+}
+
+.se-props-label {
+    font-size: 11px;
+    font-weight: 600;
+    color: #666;
+    margin-bottom: 2px;
+    display: block;
+}
+
+/* Color Picker Input */
+input[type="color"].se-color-input {
+    padding: 0;
+    border: none;
+    height: 30px;
+    width: 100%;
+    cursor: pointer;
+    background: none;
+}
+
+/* Toggle Switch (iOS style) */
+.se-toggle-wrapper {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 8px 12px;
+    cursor: pointer;
+}
+
+.se-toggle-label {
+    font-size: 13px;
+    color: #333;
+}
+
+/* The Switch Container */
+.se-switch {
+  position: relative;
+  display: inline-block;
+  width: 32px;
+  height: 18px;
+}
+
+/* Hide default HTML checkbox */
+.se-switch input {
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+/* The Slider */
+.se-slider {
+  position: absolute;
+  cursor: pointer;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: #ccc;
+  transition: .4s;
+  border-radius: 18px;
+}
+
+.se-slider:before {
+  position: absolute;
+  content: "";
+  height: 14px;
+  width: 14px;
+  left: 2px;
+  bottom: 2px;
+  background-color: white;
+  transition: .4s;
+  border-radius: 50%;
+}
+
+input:checked + .se-slider {
+  background-color: #4CAF50; /* Green */
+}
+
+input:focus + .se-slider {
+  box-shadow: 0 0 1px #4CAF50;
+}
+
+input:checked + .se-slider:before {
+  transform: translateX(14px);
+}
+
+/* Table Caption */
+.se-table-caption {
+    caption-side: top;
+    text-align: center;
+    padding: 8px;
+    font-weight: bold;
+    color: #333;
+    background: #fff;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    border-radius: 4px;
+    margin-bottom: 5px;
+    border: 1px solid #ddd;
 }

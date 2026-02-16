@@ -5,15 +5,16 @@
     const cssPath = currentScript.src.replace('.js', '.css');
 
     // Check if style already exists to avoid duplicates
-    if (!document.querySelector(`link[href="${cssPath}"]`)) {
+    if (!document.querySelector(`link[href^="${cssPath}"]`)) {
         const link = document.createElement('link');
         link.rel = 'stylesheet';
-        link.href = cssPath;
+        link.href = cssPath + '?v=' + new Date().getTime();
         document.head.appendChild(link);
     }
 })();
 
 const ICONS = {
+    menu: '<path d="M3 18h18v-2H3v2zm0-5h18v-2H3v2zm0-7v2h18V6H3z"/>',
     code: '<path d="M9.4 16.6L4.8 12l4.6-4.6L8 6l-6 6 6 6 1.4-1.4zm5.2 0l4.6-4.6-4.6-4.6L16 6l6 6-6 6-1.4-1.4z"/>',
     undo: '<path d="M12.5 8c-2.65 0-5.05.99-6.9 2.6L2 7v9h9l-3.62-3.62c1.39-1.16 3.16-1.88 5.12-1.88 3.54 0 6.55 2.31 7.6 5.5l2.37-.78C21.08 11.03 17.15 8 12.5 8z"/>',
     redo: '<path d="M18.4 10.6C16.55 9 14.15 8 11.5 8c-4.65 0-8.58 3.03-9.96 7.22L3.9 16c1.05-3.19 4.05-5.5 7.6-5.5 1.95 0 3.73.72 5.12 1.88L13 16h9V7l-3.6 3.6z"/>',
@@ -48,7 +49,40 @@ const ICONS = {
     page_size: '<path d="M14 2H6c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V8l-6-6zm2 16H8v-2h8v2zm0-4H8v-2h8v2zm-3-5V3.5L18.5 9H13z"/>',
     orientation: '<path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 14H8v-6h3v6zm6 0h-3v-6h3v6z"/>',
     margins: '<path d="M3 3v18h18V3H3zm16 16H5V5h14v14zM11 7h2v2h-2zM7 7h2v2H7zm8 0h2v2h-2zm-8 4h2v2H7zm8 0h2v2h-2zm-4 4h2v2h-2zm-4 0h2v2H7zm8 0h2v2h-2z"/>',
-    content_paste: '<path d="M19 2h-4.18C14.4.84 13.3 0 12 0c-1.3 0-2.4.84-2.82 2H5c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm-7 0c.55 0 1 .45 1 1s-.45 1-1 1-1-.45-1-1 .45-1 1-1zm7 18H5V4h2v3h10V4h2v16z"/>'
+    content_paste: '<path d="M19 2h-4.18C14.4.84 13.3 0 12 0c-1.3 0-2.4.84-2.82 2H5c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm-7 0c.55 0 1 .45 1 1s-.45 1-1 1-1-.45-1-1 .45-1 1-1zm7 18H5V4h2v3h10V4h2v16z"/>',
+    // Table Icons
+    // Table Icons (Customized for Toolbar)
+    insert_col_left: '<path d="M4 2h16a2 2 0 012 2v16a2 2 0 01-2 2H4a2 2 0 01-2-2V4a2 2 0 012-2zm-2 2v16H5V4H2zm5 0v16h3V4H7zm5 0v16h3V4h-3z" opacity=".5"/><path d="M2 4h3v16H2z"/>',
+    insert_col_right: '<path d="M4 2h16a2 2 0 012 2v16a2 2 0 01-2 2H4a2 2 0 01-2-2V4a2 2 0 012-2zm2 2v16h3V4H6zm5 0v16h3V4h-3zm5 0v16h3V4h-3z" opacity=".5"/><path d="M11 4h3v16h-3z"/>', // Highlight middle column
+    delete_col: '<path d="M4 2h16a2 2 0 012 2v16a2 2 0 01-2 2H4a2 2 0 01-2-2V4a2 2 0 012-2zm2 2h3v16H6V4zm5 0h3v16h-3V4zm5 0h3v16h-3V4z" opacity=".5"/><path d="M12 8l4 4m0-4l-4 4" stroke="red" stroke-width="2"/>',
+    
+    insert_row_above: '<path d="M4 2h16a2 2 0 012 2v16a2 2 0 01-2 2H4a2 2 0 01-2-2V4a2 2 0 012-2zm0 2h16v3H4V4zm0 5h16v3H4V9zm0 5h16v3H4v-3z" opacity=".5"/><path d="M4 4h16v3H4z"/>',
+    insert_row_below: '<path d="M4 2h16a2 2 0 012 2v16a2 2 0 01-2 2H4a2 2 0 01-2-2V4a2 2 0 012-2zm0 2h16v3H4V4zm0 5h16v3H4V9zm0 5h16v3H4v-3z" opacity=".5"/><path d="M4 9h16v3H4z"/>', // Highlight middle row
+    delete_row: '<path d="M4 2h16a2 2 0 012 2v16a2 2 0 01-2 2H4a2 2 0 01-2-2V4a2 2 0 012-2zm0 2h16v3H4V4zm0 5h16v3H4V9zm0 5h16v3H4v-3z" opacity=".5"/><path d="M8 10l4 4m0-4l-4 4" stroke="red" stroke-width="2"/>',
+
+    merge_cells: '<path d="M4 4h7v7H4V4zm9 0h7v7h-7V4zM4 13h16v7H4v-7z"/>', // Merged bottom
+    split_cells: '<path d="M4 4h7v16H4V4zm9 0h7v16h-7V4z"/>',
+
+    table_props: '<g><path d="M4 4h16v16H4V4zm2 2v12h12V6H6z"/><path d="M18 15l-1.5-3L18 9l-3 1.5L12 9l1.5 3L12 15l3-1.5z" fill="#fbbc04"/></g>', // Table with Star
+    cell_props: '<g><path d="M4 4h16v16H4V4zm2 2v12h12V6H6z" opacity=".5"/><path d="M10 10h4v4h-4z"/><path d="M18 15l-1.5-3L18 9l-3 1.5L12 9l1.5 3L12 15l3-1.5z" fill="#fbbc04"/></g>', // Cell with Star
+    caption: '<path d="M21 4H3c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h5l-1 2h10l-1-2h5c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 14H3V6h18v12z"/>', // Monitor style
+    
+    // Enter Icon for Paragraph Insertion
+    insert_paragraph: '<path d="M19 7v4H5.83l3.58-3.59L8 6l-6 6 6 6 1.41-1.41L5.83 13H21V7h-2z"/>',
+    
+    // Merge Icons
+    merge_cell_up: '<path d="M4 4h16v16H4V4zm2 2v12h12V6H6zm6 5v-3h2v3h3v2h-3v3h-2v-3h-3v-2h3z" opacity=".5"/><path d="M8 8l4-4 4 4H8z"/>', // Arrow Up
+    merge_cell_right: '<path d="M4 4h16v16H4V4zm2 2v12h12V6H6zm6 5v-3h2v3h3v2h-3v3h-2v-3h-3v-2h3z" opacity=".5"/><path d="M16 12l-4-4v8l4-4z"/>', // Arrow Right
+    merge_cell_down: '<path d="M4 4h16v16H4V4zm2 2v12h12V6H6zm6 5v-3h2v3h3v2h-3v3h-2v-3h-3v-2h3z" opacity=".5"/><path d="M12 16l-4-4h8l-4 4z"/>', // Arrow Down
+    merge_cell_left: '<path d="M4 4h16v16H4V4zm2 2v12h12V6H6zm6 5v-3h2v3h3v2h-3v3h-2v-3h-3v-2h3z" opacity=".5"/><path d="M8 12l4 4V8l-4 4z"/>', // Arrow Left
+    
+    // Split Icons
+    split_cell_vertical: '<path d="M4 4h16v16H4V4zm2 2v12h12V6H6z"/><path d="M12 6v12" stroke="currentColor" stroke-width="2"/>', // Divider V
+    split_cell_horizontal: '<path d="M4 4h16v16H4V4zm2 2v12h12V6H6z"/><path d="M6 12h12" stroke="currentColor" stroke-width="2"/>', // Divider H
+
+    vertical_align_top: '<path d="M8 11h3v10h2V11h3l-4-4-4 4zM4 3v2h16V3H4z"/>',
+    vertical_align_center: '<path d="M8 19h3v4h2v-4h3l-4-4-4 4zm8-14h-3V1h-2v4H8l4 4 4-4zM4 11v2h16v-2H4z"/>',
+    vertical_align_bottom: '<path d="M16 13h-3V3h-2v10H8l4 4 4-4zM4 19v2h16v-2H4z"/>'
 };
 
 class SEditor {
@@ -119,6 +153,52 @@ class SEditor {
         this.sourceArea.className = 'se-source-view';
         this.sourceArea.style.display = 'none';
 
+        // Create Source View Toolbar
+        this.sourceToolbar = document.createElement('div');
+        this.sourceToolbar.className = 'se-source-toolbar';
+        this.sourceToolbar.style.display = 'none';
+        
+        // Copy Button
+        const btnCopy = document.createElement('button');
+        btnCopy.className = 'se-btn-source-action';
+        btnCopy.innerHTML = `<svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor">${ICONS.content_paste || '<path d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"/>'}</svg> Copy`;
+        btnCopy.onclick = () => {
+             // User wants "min format" for efficiency
+             const minified = this.minifyHTML(this.page.innerHTML);
+             
+             // Temporarily set value to minified to copy it
+             const currentVal = this.sourceArea.value;
+             this.sourceArea.value = minified;
+             this.sourceArea.select();
+             document.execCommand('copy');
+             
+             // Restore view
+             this.sourceArea.value = currentVal;
+             
+            // Visual feedback
+            const originalText = btnCopy.innerHTML;
+            btnCopy.innerHTML = 'Copied Minified!';
+            setTimeout(() => btnCopy.innerHTML = originalText, 1500);
+        };
+
+        // Minify/Format Toggle
+        const btnFormat = document.createElement('button');
+        btnFormat.className = 'se-btn-source-action';
+        btnFormat.innerHTML = `<svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor"><path d="M9.4 16.6L4.8 12l4.6-4.6L8 6l-6 6 6 6 1.4-1.4zm5.2 0l4.6-4.6-4.6-4.6L16 6l6 6-6 6-1.4-1.4z"/></svg> Minify`;
+        btnFormat.onclick = () => {
+            const current = this.sourceArea.value;
+            if (btnFormat.innerText.trim() === 'Minify') {
+                this.sourceArea.value = this.minifyHTML(current);
+                btnFormat.innerHTML = `<svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor"><path d="M9.4 16.6L4.8 12l4.6-4.6L8 6l-6 6 6 6 1.4-1.4zm5.2 0l4.6-4.6-4.6-4.6L16 6l6 6-6 6-1.4-1.4z"/></svg> Format`;
+            } else {
+                this.sourceArea.value = this.formatHTML(current);
+                btnFormat.innerHTML = `<svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor"><path d="M9.4 16.6L4.8 12l4.6-4.6L8 6l-6 6 6 6 1.4-1.4zm5.2 0l4.6-4.6-4.6-4.6L16 6l6 6-6 6-1.4-1.4z"/></svg> Minify`;
+            }
+        };
+
+        this.sourceToolbar.appendChild(btnFormat);
+        this.sourceToolbar.appendChild(btnCopy);
+
         // Load initial content
         if (this.targetElement.value) {
             this.page.innerHTML = this.targetElement.value;
@@ -131,6 +211,12 @@ class SEditor {
         // History Init
         this.historyStack = [];
         this.historyIndex = -1;
+        
+        // Table Hover State
+        this.tableHandles = [];
+        this.currentHoverTable = null;
+        this.currentSourceMode = 'formatted'; // Track state
+
         this.saveState(); // Save initial state
 
         // Sync Handling & History
@@ -189,8 +275,9 @@ class SEditor {
 
         this.wrapper.appendChild(this.page);
         this.wrapper.appendChild(this.sourceArea);
+        this.wrapper.appendChild(this.sourceToolbar);
         this.container.appendChild(this.wrapper);
-
+        
         // Replace logic
         if (this.isFormInput()) {
             this.targetElement.style.display = 'none';
@@ -200,7 +287,7 @@ class SEditor {
             this.targetElement.appendChild(this.container);
         }
 
-        this.createPopup();
+        this.createPopup();  
     }
 
     isFormInput() {
@@ -485,9 +572,15 @@ class SEditor {
     toggleSource() {
         if (this.sourceArea.style.display === 'none') {
             // Switch to Source
-            this.sourceArea.value = this.page.innerHTML;
+            const raw = this.page.innerHTML;
+            this.sourceArea.value = this.formatHTML(raw);
             this.sourceArea.style.display = 'block';
+            this.sourceToolbar.style.display = 'flex'; // Show toolbar
             this.page.style.display = 'none';
+
+            // Reset Format button text
+             const btnFormat = this.sourceToolbar.querySelector('button:first-child');
+             if(btnFormat) btnFormat.innerHTML = `<svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor"><path d="M9.4 16.6L4.8 12l4.6-4.6L8 6l-6 6 6 6 1.4-1.4zm5.2 0l4.6-4.6-4.6-4.6L16 6l6 6-6 6-1.4-1.4z"/></svg> Minify`;
 
             const btn = this.container.querySelector('#se-btn-source');
             if (btn) btn.classList.add('se-active');
@@ -498,6 +591,7 @@ class SEditor {
             this.page.innerHTML = this.sourceArea.value;
             this.updateOriginal();
             this.sourceArea.style.display = 'none';
+            this.sourceToolbar.style.display = 'none'; // Hide toolbar
             this.page.style.display = 'block';
 
             const btn = this.container.querySelector('#se-btn-source');
@@ -505,6 +599,44 @@ class SEditor {
 
             this.setToolbarDisabled(false);
         }
+    }
+
+    formatHTML(html) {
+        let formatted = '';
+        let indent = 0;
+        
+        // Remove existing whitespace between tags to avoid double spacing
+        html = html.replace(/>\s+</g, '><').trim();
+        
+        // Split by tags
+        const tokens = html.split(/(<[^>]+>)/g).filter(Boolean);
+        
+        tokens.forEach(token => {
+            if (token.match(/^<\//)) {
+                // Closing tag
+                indent = Math.max(0, indent - 1);
+                formatted += '\n' + '  '.repeat(indent) + token;
+            } else if (token.match(/^<[^\/].*\/>$/) || token.match(/^<(br|img|hr|input|meta|link)/)) {
+                // Self-closing or void tag (no indent change)
+                formatted += '\n' + '  '.repeat(indent) + token;
+            } else if (token.match(/^<[^\/]/)) {
+                // Opening tag
+                formatted += '\n' + '  '.repeat(indent) + token;
+                indent++;
+            } else {
+                // Text content
+                formatted += token.trim(); 
+            }
+        });
+        
+        return formatted.trim();
+    }
+
+    minifyHTML(html) {
+        return html
+            .replace(/>\s+</g, '><')
+            .replace(/\s{2,}/g, ' ')
+            .trim();
     }
 
     setToolbarDisabled(disabled) {
@@ -805,10 +937,11 @@ class SEditor {
             }
         });
 
-        // Context Menu for Links/Images
+        // Context Menu for Links/Images/Tables
         this.page.addEventListener('click', (e) => {
             const anchor = e.target.closest('a');
             const img = e.target.closest('img');
+            const cell = e.target.closest('td, th');
 
             if (anchor && this.page.contains(anchor)) {
                 e.preventDefault();
@@ -817,8 +950,131 @@ class SEditor {
             } else if (img && this.page.contains(img)) {
                 this.currentImage = img;
                 this.showPopup('image-actions', img.getBoundingClientRect());
+            } else if ((cell && this.page.contains(cell)) || (e.target.closest('table') && e.target.closest('table').classList.contains('se-table-hover'))) {
+                const table = cell ? cell.closest('table') : e.target.closest('table');
+                if (table && this.page.contains(table)) {
+                    this.currentTable = table;
+                    // Try to find a cell if clicked on border/table-bg
+                    if (cell) {
+                        this.currentRow = cell.closest('tr');
+                        this.currentCell = cell;
+                    } else if (table.rows.length > 0 && table.rows[0].cells.length > 0) {
+                         this.currentRow = table.rows[0];
+                         this.currentCell = table.rows[0].cells[0];
+                    }
+
+                    // Trigger main menu
+                    this.showPopup('table-main', (cell || table).getBoundingClientRect());
+                }
             }
         });
+
+        // Table Hover UI
+        document.addEventListener('mousemove', (e) => {
+            const table = e.target.closest('table');
+            const handle = e.target.closest('.se-table-handle');
+
+            // Check if hovering over a table within the editor page
+            if (table && this.page.contains(table)) {
+                this.showTableHandles(table);
+            } else if (handle) {
+                // Keep handles visible if hovering over them
+                return; 
+            } else {
+                // Remove handles if not on a table and not on a handle
+                if (this.currentHoverTable) {
+                    // Slight delay or check distance? 
+                    // For now, immediate removal if strictly outside
+                    this.removeTableHandles();
+                }
+            }
+        });
+    }
+
+    showTableHandles(table) {
+        if (this.currentHoverTable === table) return;
+        this.removeTableHandles();
+        this.currentHoverTable = table;
+        table.classList.add('se-table-hover');
+
+        const rect = table.getBoundingClientRect();
+        const containerRect = this.container.getBoundingClientRect();
+        
+        // Offset relative to container
+        // We need handles to be in the container, absolute positioned
+        // Coordinates:
+        const top = rect.top - containerRect.top + this.container.scrollTop; // If container scrolls? 
+        // Actually usually page scrolls inside editor-wrapper. 
+        // Let's assume editor-wrapper is the offset parent for absolute handles?
+        // No, Handles should probably be injected into the wrapper or body.
+        // Let's inject into document.body to be safe and use fixed/absolute coordinates like popup.
+        
+        const createHandle = (cls, icon, title, onClick) => {
+            const h = document.createElement('div');
+            h.className = `se-table-handle ${cls}`;
+            h.innerHTML = `<svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor">${icon}</svg>`;
+            h.title = title;
+            h.onclick = (e) => {
+                e.stopPropagation();
+                onClick();
+            }
+            document.body.appendChild(h);
+            return h;
+        };
+
+        const scrollTop = window.scrollY;
+        const scrollLeft = window.scrollX;
+
+        // Top Paragraph Handle
+        const btnTop = createHandle('se-table-handle-top', ICONS.insert_paragraph || '+', 'Insert Paragraph Before', () => {
+             const p = document.createElement('p');
+             p.innerHTML = '<br>';
+             table.parentNode.insertBefore(p, table);
+             this.removeTableHandles();
+        });
+        btnTop.style.top = (rect.top + scrollTop - 12) + 'px';
+        btnTop.style.left = (rect.left + scrollLeft + rect.width/2 - 12) + 'px';
+        this.tableHandles.push(btnTop);
+
+        // Bottom Paragraph Handle
+        const btnBot = createHandle('se-table-handle-bottom', ICONS.insert_paragraph || '+', 'Insert Paragraph After', () => {
+             const p = document.createElement('p');
+             p.innerHTML = '<br>';
+             if (table.nextSibling) {
+                 table.parentNode.insertBefore(p, table.nextSibling);
+             } else {
+                 table.parentNode.appendChild(p);
+             }
+             this.removeTableHandles();
+        });
+        btnBot.style.top = (rect.bottom + scrollTop - 12) + 'px';
+        btnBot.style.left = (rect.left + scrollLeft + rect.width/2 - 12) + 'px';
+        this.tableHandles.push(btnBot);
+
+        // Menu Handle (Top-Right or Top-Left? Req says "design top enter icon... hole table hover click to open")
+        // "hole table hover click to open" might mean clicking the table itself opens menu (which we have on cell click).
+        // Let's add a visual menu trigger at top-left.
+        const btnMenu = createHandle('se-table-handle-menu', ICONS.menu || '≡', 'Table Menu', () => {
+             this.currentTable = table;
+             // Select first cell for context
+             this.currentCell = table.rows[0].cells[0];
+             this.currentRow = table.rows[0];
+             this.showPopup('table-main', table.getBoundingClientRect());
+        });
+        btnMenu.style.top = (rect.top + scrollTop - 12) + 'px';
+        btnMenu.style.left = (rect.left + scrollLeft - 12) + 'px';
+        this.tableHandles.push(btnMenu);
+    }
+
+    removeTableHandles() {
+        if (this.currentHoverTable) {
+            this.currentHoverTable.classList.remove('se-table-hover');
+            this.currentHoverTable = null;
+        }
+        if (this.tableHandles) {
+            this.tableHandles.forEach(h => h.remove());
+        }
+        this.tableHandles = [];
     }
 
     showPopup(type, rect, data = {}, onSave = null) {
@@ -844,11 +1100,14 @@ class SEditor {
                 </div>`;
         } else if (type === 'table') {
             content = `
-                <input type="number" id="se-popup-rows" placeholder="Rows" value="" min="1">
-                <input type="number" id="se-popup-cols" placeholder="Columns" value="" min="1">
-                <div class="se-popup-actions">
-                    <button type="button" class="se-btn-secondary" id="se-popup-cancel">Cancel</button>
-                    <button type="button" class="se-btn-primary" id="se-popup-save">Insert</button>
+                <div style="padding:10px; width:220px;">
+                    <div style="font-weight:600; margin-bottom:8px;">Insert Table</div>
+                    <input type="number" id="se-popup-rows" placeholder="Rows" value="" min="1" style="width:100%; margin-bottom:5px;">
+                    <input type="number" id="se-popup-cols" placeholder="Columns" value="" min="1" style="width:100%; margin-bottom:5px;">
+                    <div class="se-popup-actions">
+                        <button type="button" class="se-btn-secondary" id="se-popup-cancel">Cancel</button>
+                        <button type="button" class="se-btn-primary" id="se-popup-save">Insert</button>
+                    </div>
                 </div>`;
         } else if (type === 'link-actions') {
             content = `
@@ -862,6 +1121,210 @@ class SEditor {
                 <div class="se-popup-tools">
                     <button type="button" class="se-btn-secondary" id="se-popup-edit">Edit</button>
                     <button type="button" class="se-btn-danger" id="se-popup-delete">Delete</button>
+                </div>`;
+        } else if (type === 'table-main') {
+            // Horizontal Toolbar Design
+            // Using a compact flex container
+            content = `
+                <div class="se-popup-tools se-table-toolbar">
+                    <!-- Column Group -->
+                    <div class="se-toolbar-group-btn" title="Column Options" data-action="table-column">
+                         <svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor">${ICONS.insert_col_right || ICONS.table_chart}</svg>
+                         <span class="se-toolbar-arrow">▼</span>
+                    </div>
+                    
+                    <!-- Row Group -->
+                    <div class="se-toolbar-group-btn" title="Row Options" data-action="table-row">
+                         <svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor">${ICONS.insert_row_below || ICONS.table_chart}</svg>
+                         <span class="se-toolbar-arrow">▼</span>
+                    </div>
+
+                    <!-- Merge Group -->
+                    <div class="se-toolbar-group-btn" title="Merge/Split" data-action="table-merge">
+                         <svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor">${ICONS.merge_cells}</svg>
+                         <span class="se-toolbar-arrow">▼</span>
+                    </div>
+
+                    <div class="se-toolbar-separator"></div>
+
+                    <!-- Properties -->
+                    <div class="se-toolbar-btn" title="Table Properties" data-action="table-props-detail">
+                        <svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor">${ICONS.table_props}</svg>
+                    </div>
+                    <div class="se-toolbar-btn" title="Cell Properties" data-action="cell-props-detail">
+                         <svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor">${ICONS.cell_props}</svg>
+                    </div>
+
+                    <div class="se-toolbar-separator"></div>
+
+                    <!-- Caption -->
+                    <div class="se-toolbar-btn" title="Toggle Caption" id="se-tbl-caption-toggle-btn">
+                        <svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor">${ICONS.caption}</svg>
+                    </div>
+                </div>`;
+        } else if (type === 'table-column') {
+             // Check if current column is header
+             const isHeader = this.isCurrentColumnHeader();
+             content = `
+                <div class="se-popup-menu-list" style="width:200px;">
+                    <div style="padding: 8px 12px; font-weight:600; font-size:13px; color:#333;">Column Options</div>
+                    <div class="se-menu-divider"></div>
+
+                    <!-- Header Toggle -->
+                    <label class="se-toggle-wrapper" id="se-col-nav-header">
+                        <span class="se-toggle-label">Header Column</span>
+                        <div class="se-switch">
+                            <input type="checkbox" ${isHeader ? 'checked' : ''}>
+                            <span class="se-slider"></span>
+                        </div>
+                    </label>
+
+                    <div class="se-menu-divider"></div>
+
+                    <div class="se-menu-item" id="se-col-insert-left"><svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor">${ICONS.insert_col_left || ''}</svg> Insert Column Left</div>
+                    <div class="se-menu-item" id="se-col-insert-right"><svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor">${ICONS.insert_col_right || ''}</svg> Insert Column Right</div>
+                    <div class="se-menu-item" id="se-col-delete"><svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor">${ICONS.delete_col || ''}</svg> Delete Column</div>
+                    <div class="se-menu-item" id="se-col-select"><svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor">${ICONS.dataset_linked || ''}</svg> Select Column</div>
+                </div>`;
+        } else if (type === 'table-row') {
+             // Check if current row is header
+             const isHeader = this.isCurrentRowHeader();
+             content = `
+                <div class="se-popup-menu-list" style="width:200px;">
+                    <div style="padding: 8px 12px; font-weight:600; font-size:13px; color:#333;">Row Options</div>
+                    <div class="se-menu-divider"></div>
+
+                    <!-- Header Toggle -->
+                    <label class="se-toggle-wrapper" id="se-row-nav-header">
+                        <span class="se-toggle-label">Header Row</span>
+                        <div class="se-switch">
+                            <input type="checkbox" ${isHeader ? 'checked' : ''}>
+                            <span class="se-slider"></span>
+                        </div>
+                    </label>
+
+                    <div class="se-menu-divider"></div>
+
+                    <div class="se-menu-item" id="se-row-insert-above"><svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor">${ICONS.insert_row_above || ''}</svg> Insert Row Above</div>
+                    <div class="se-menu-item" id="se-row-insert-below"><svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor">${ICONS.insert_row_below || ''}</svg> Insert Row Below</div>
+                    <div class="se-menu-item" id="se-row-delete"><svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor">${ICONS.delete_row || ''}</svg> Delete Row</div>
+                    <div class="se-menu-item" id="se-row-select"><svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor">${ICONS.dataset_linked || ''}</svg> Select Row</div>
+                </div>`;
+        } else if (type === 'table-merge') {
+             content = `
+                <div class="se-popup-menu-list" style="width:200px;">
+                    <div style="padding: 8px 12px; font-weight:600; font-size:13px; color:#333;">Merge/Split</div>
+                    <div class="se-menu-divider"></div>
+                    <div class="se-menu-item" id="se-merge-up"><svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor">${ICONS.merge_cell_up}</svg> Merge Cell Up</div>
+                    <div class="se-menu-item" id="se-merge-right"><svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor">${ICONS.merge_cell_right}</svg> Merge Cell Right</div>
+                    <div class="se-menu-item" id="se-merge-down"><svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor">${ICONS.merge_cell_down}</svg> Merge Cell Down</div>
+                    <div class="se-menu-item" id="se-merge-left"><svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor">${ICONS.merge_cell_left}</svg> Merge Cell Left</div>
+                    <div class="se-menu-divider"></div>
+                    <div class="se-menu-item" id="se-split-vert"><svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor">${ICONS.split_cell_vertical}</svg> Split Cell Vertically</div>
+                    <div class="se-menu-item" id="se-split-horiz"><svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor">${ICONS.split_cell_horizontal}</svg> Split Cell Horizontally</div>
+                </div>`;
+        } else if (type === 'table-props-detail') {
+             // Dimensions, Border, Background, Align
+             content = `
+                <div style="padding:10px; width:240px;">
+                    <div style="font-weight:600; margin-bottom:8px;">Table Properties</div>
+                    
+                    <div class="se-props-grid">
+                        <div>
+                            <span class="se-props-label">Border Style</span>
+                            <select id="se-tbl-border-style" style="width:100%;">
+                                <option value="solid" ${data.borderStyle === 'solid' ? 'selected' : ''}>Solid</option>
+                                <option value="dashed" ${data.borderStyle === 'dashed' ? 'selected' : ''}>Dashed</option>
+                                <option value="dotted" ${data.borderStyle === 'dotted' ? 'selected' : ''}>Dotted</option>
+                                <option value="double" ${data.borderStyle === 'double' ? 'selected' : ''}>Double</option>
+                                <option value="groove" ${data.borderStyle === 'groove' ? 'selected' : ''}>Groove</option>
+                                <option value="ridge" ${data.borderStyle === 'ridge' ? 'selected' : ''}>Ridge</option>
+                                <option value="inset" ${data.borderStyle === 'inset' ? 'selected' : ''}>Inset</option>
+                                <option value="outset" ${data.borderStyle === 'outset' ? 'selected' : ''}>Outset</option>
+                                <option value="hidden" ${data.borderStyle === 'hidden' ? 'selected' : ''}>Hidden</option>
+                                <option value="none" ${data.borderStyle === 'none' ? 'selected' : ''}>None</option>
+                            </select>
+                        </div>
+                        <div>
+                            <span class="se-props-label">Width (px)</span>
+                            <input type="number" id="se-tbl-border-width" value="${data.borderWidth || 1}" style="width:100%;">
+                        </div>
+                        <div class="se-props-row">
+                             <span class="se-props-label">Border Color</span>
+                             <div style="display:flex; gap:5px;">
+                                 <input type="color" id="se-tbl-border-color" value="${data.borderColor || '#000000'}" class="se-color-input">
+                             </div>
+                        </div>
+                        <div class="se-props-row">
+                             <span class="se-props-label">Background</span>
+                             <input type="color" id="se-tbl-bg-color" value="${data.backgroundColor || '#ffffff'}" class="se-color-input">
+                        </div>
+                        <div>
+                             <span class="se-props-label">Width</span>
+                             <input type="text" id="se-tbl-width" value="${data.width || ''}" placeholder="100%">
+                        </div>
+                        <div>
+                             <span class="se-props-label">Height</span>
+                             <input type="text" id="se-tbl-height" value="${data.height || ''}" placeholder="auto">
+                        </div>
+                        <div class="se-props-row">
+                             <span class="se-props-label">Alignment</span>
+                             <div style="display:flex; justify-content:space-between;">
+                                 <button type="button" class="se-btn-tool" id="se-tbl-align-left"><svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor">${ICONS.format_align_left}</svg></button>
+                                 <button type="button" class="se-btn-tool" id="se-tbl-align-center"><svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor">${ICONS.format_align_center}</svg></button>
+                                 <button type="button" class="se-btn-tool" id="se-tbl-align-right"><svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor">${ICONS.format_align_right}</svg></button>
+                             </div>
+                        </div>
+                    </div>
+                    <div class="se-popup-actions">
+                         <button type="button" class="se-btn-secondary" id="se-popup-cancel">Cancel</button>
+                         <button type="button" class="se-btn-primary" id="se-popup-save">Save</button>
+                    </div>
+                </div>`;
+        } else if (type === 'cell-props-detail') {
+             content = `
+                <div style="padding:10px; width:240px;">
+                    <div style="font-weight:600; margin-bottom:8px;">Cell Properties</div>
+                    
+                    <div class="se-props-grid">
+                         <div class="se-props-row">
+                             <span class="se-props-label">Background</span>
+                             <input type="color" id="se-cell-bg-color" value="#ffffff" class="se-color-input">
+                        </div>
+                        <div>
+                             <span class="se-props-label">Width</span>
+                             <input type="text" id="se-cell-width" value="${data.width || ''}">
+                        </div>
+                        <div>
+                             <span class="se-props-label">Height</span>
+                             <input type="text" id="se-cell-height" value="${data.height || ''}">
+                        </div>
+                        <div>
+                             <span class="se-props-label">Padding</span>
+                             <input type="text" id="se-cell-padding" value="${data.padding || ''}">
+                        </div>
+                        <div class="se-props-row">
+                             <span class="se-props-label">Text Align</span>
+                             <div style="display:flex; gap:2px;">
+                                 <button type="button" class="se-btn-tool" id="se-cell-align-left"><svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor">${ICONS.format_align_left}</svg></button>
+                                 <button type="button" class="se-btn-tool" id="se-cell-align-center"><svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor">${ICONS.format_align_center}</svg></button>
+                                 <button type="button" class="se-btn-tool" id="se-cell-align-right"><svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor">${ICONS.format_align_right}</svg></button>
+                                 <button type="button" class="se-btn-tool" id="se-cell-align-justify"><svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor">${ICONS.format_align_justify}</svg></button>
+                             </div>
+                        </div>
+                         <div class="se-props-row">
+                             <span class="se-props-label">Vertical Align</span>
+                             <div style="display:flex; gap:2px;">
+                                 <button type="button" class="se-btn-tool" id="se-cell-valign-top"><svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor">${ICONS.vertical_align_top}</svg></button>
+                                 <button type="button" class="se-btn-tool" id="se-cell-valign-middle"><svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor">${ICONS.vertical_align_center}</svg></button>
+                                 <button type="button" class="se-btn-tool" id="se-cell-valign-bottom"><svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor">${ICONS.vertical_align_bottom}</svg></button>
+                             </div>
+                        </div>
+                    </div>
+                    <div class="se-popup-actions">
+                         <button type="button" class="se-btn-secondary" id="se-popup-cancel">Cancel</button>
+                         <button type="button" class="se-btn-primary" id="se-popup-save">Save</button>
+                    </div>
                 </div>`;
         } else if (type === 'menu') {
             content = `
@@ -878,11 +1341,14 @@ class SEditor {
                 </div>`;
         } else if (type === 'pageSize') {
             content = `
-                <input type="text" id="se-popup-width" placeholder="Width (e.g. 210mm)" value="">
-                <input type="text" id="se-popup-height" placeholder="Height (e.g. 297mm)" value="">
-                <div class="se-popup-actions">
-                    <button type="button" class="se-btn-secondary" id="se-popup-cancel">Cancel</button>
-                    <button type="button" class="se-btn-primary" id="se-popup-save">Apply</button>
+                <div style="padding:10px; width:220px;">
+                    <div style="font-weight:600; margin-bottom:8px;">Page Size</div>
+                    <input type="text" id="se-popup-width" placeholder="Width (e.g. 210mm)" value="" style="width:100%; margin-bottom:5px;">
+                    <input type="text" id="se-popup-height" placeholder="Height (e.g. 297mm)" value="" style="width:100%; margin-bottom:5px;">
+                    <div class="se-popup-actions">
+                        <button type="button" class="se-btn-secondary" id="se-popup-cancel">Cancel</button>
+                        <button type="button" class="se-btn-primary" id="se-popup-save">Apply</button>
+                    </div>
                 </div>`;
         } else if (type === 'margins') {
             content = `
@@ -1068,6 +1534,218 @@ class SEditor {
         [menuLink, menuImage, menuTable].forEach(btn => {
             if (btn) btn.onmousedown = (e) => e.preventDefault();
         });
+
+        // Helper to convert color
+        const rgbToHex = (col) => {
+            if (!col) return '#000000';
+            if (col.startsWith('#')) return col;
+            const rgb = col.match(/\d+/g);
+            if (!rgb) return '#000000';
+            return '#' + ((1 << 24) + (parseInt(rgb[0]) << 16) + (parseInt(rgb[1]) << 8) + parseInt(rgb[2])).toString(16).slice(1);
+        };
+
+        // Initialize Menu Navigation
+        // Unified Handler for Menu Actions (Toolbar & Sub-menus)
+        const handleActionClick = (target) => {
+             const action = target.getAttribute('data-action');
+             if (!action) return;
+
+             // Check if it's a direct command
+             if (actions[action]) {
+                 actions[action]();
+                 this.closePopup();
+                 return;
+             }
+
+             // Sub-menu navigation / Properties handling
+             let data = {};
+             if (action === 'table-props-detail' && this.currentTable) {
+                 const s = this.currentTable.style;
+                 data = {
+                     width: s.width,
+                     height: s.height,
+                     backgroundColor: rgbToHex(s.backgroundColor || '#ffffff'),
+                     borderStyle: s.borderStyle || 'solid',
+                     borderWidth: parseInt(s.borderWidth) || 1,
+                     borderColor: rgbToHex(s.borderColor || '#000000')
+                 };
+             } else if (action === 'cell-props-detail' && this.currentCell) {
+                 const s = this.currentCell.style;
+                 data = {
+                     width: s.width,
+                     height: s.height,
+                     backgroundColor: rgbToHex(s.backgroundColor || '#ffffff'),
+                     padding: s.padding,
+                     textAlign: s.textAlign,
+                     verticalAlign: s.verticalAlign
+                 };
+             }
+             
+             this.showPopup(action, rect, data);
+        };
+
+        // Bind to all interactive elements
+        const menuItems = this.popup.querySelectorAll('.se-menu-item[data-action], .se-toolbar-group-btn[data-action], .se-toolbar-btn[data-action]');
+        menuItems.forEach(item => {
+            item.onclick = (e) => {
+                e.stopPropagation();
+                handleActionClick(item.closest('[data-action]')); 
+            };
+        });
+
+
+
+        // Toggle Caption
+        const captionToggle = this.popup.querySelector('#se-tbl-caption-toggle-btn');
+        if (captionToggle) {
+            captionToggle.onclick = () => {
+                this.toggleCaption();
+                this.showPopup('table-main', rect); // Refresh to update (On)/(Off) status
+            };
+        }
+
+        // Sub-menu actions
+        const actions = {
+            'se-col-nav-header': () => this.toggleHeaderColumn(),
+            'se-col-insert-left': () => this.insertColumn('left'),
+            'se-col-insert-right': () => this.insertColumn('right'),
+            'se-col-delete': () => this.deleteColumn(),
+            'se-col-select': () => this.selectColumn(),
+            'se-row-nav-header': () => this.toggleHeaderRow(),
+            'se-row-insert-above': () => this.insertRow('above'),
+            'se-row-insert-below': () => this.insertRow('below'),
+            'se-row-delete': () => this.deleteRow(),
+            'se-row-select': () => this.selectRow(),
+            'se-merge-up': () => this.mergeCell('up'),
+            'se-merge-right': () => this.mergeCell('right'),
+            'se-merge-down': () => this.mergeCell('down'),
+            'se-merge-left': () => this.mergeCell('left'),
+            'se-split-vert': () => this.splitCell('vertical'),
+            'se-split-horiz': () => this.splitCell('horizontal')
+        };
+
+        Object.keys(actions).forEach(id => {
+            const el = this.popup.querySelector('#' + id);
+            if (el) {
+                // If it's a toggle/label, we want to listen to the change or click
+                if (el.classList.contains('se-toggle-wrapper')) {
+                    el.onchange = (e) => {
+                         // e.target is the input
+                         actions[id]();
+                         // Delay closing to show animation?
+                         setTimeout(() => this.closePopup(), 300);
+                    };
+                } else {
+                    el.onclick = () => {
+                        actions[id]();
+                        this.closePopup(); 
+                    }
+                }
+            }
+        });
+
+        // Table Properties Save
+        if (type === 'table-props-detail') {
+             const saveBtn = this.popup.querySelector('#se-popup-save');
+             if (saveBtn) {
+                 saveBtn.onclick = () => {
+                     const width = this.popup.querySelector('#se-tbl-width').value;
+                     const height = this.popup.querySelector('#se-tbl-height').value;
+                     const bgColor = this.popup.querySelector('#se-tbl-bg-color').value;
+                     
+                     // Construct Border
+                     const bStyle = this.popup.querySelector('#se-tbl-border-style').value;
+                     let bWidth = this.popup.querySelector('#se-tbl-border-width').value;
+                     const bColor = this.popup.querySelector('#se-tbl-border-color').value;
+                     
+                     // Enforce minimum width for complex styles to be visible
+                     if (['double', 'groove', 'ridge', 'inset', 'outset'].includes(bStyle) && bWidth < 3) {
+                         bWidth = 3; 
+                     }
+
+                     let border = '';
+                     if (bStyle !== 'none' && bStyle !== 'hidden') {
+                         border = `${bWidth}px ${bStyle} ${bColor}`;
+                     } else {
+                         border = 'none';
+                     }
+
+                     if (this.currentTable) {
+                         this.currentTable.style.width = width;
+                         this.currentTable.style.height = height;
+                         this.currentTable.style.backgroundColor = bgColor;
+                         this.currentTable.style.border = border;
+                         this.currentTable.style.borderCollapse = 'collapse'; // Ensure clean borders
+                         
+                         // Apply border to all cells to match table style (user expectation)
+                         const cells = this.currentTable.querySelectorAll('td, th');
+                         cells.forEach(cell => {
+                             cell.style.border = border;
+                         });
+                     }
+                     this.closePopup();
+                 };
+             }
+             
+             // Alignment Buttons
+             ['left', 'center', 'right'].forEach(align => {
+                 const btn = this.popup.querySelector(`#se-tbl-align-${align}`);
+                 if (btn) btn.onclick = () => {
+                     if (this.currentTable) {
+                         // Table alignment involves margin auto or float depending on doc mode.
+                         // Standard: margin-left: auto, margin-right: auto for center.
+                         if (align === 'center') {
+                             this.currentTable.style.marginLeft = 'auto';
+                             this.currentTable.style.marginRight = 'auto';
+                         } else if (align === 'left') {
+                             this.currentTable.style.marginLeft = '0';
+                             this.currentTable.style.marginRight = 'auto';
+                         } else if (align === 'right') {
+                             this.currentTable.style.marginLeft = 'auto';
+                             this.currentTable.style.marginRight = '0';
+                         }
+                     }
+                 }
+             });
+        }
+
+        // Cell Properties Save
+        if (type === 'cell-props-detail') {
+             const saveBtn = this.popup.querySelector('#se-popup-save');
+             if (saveBtn) {
+                 saveBtn.onclick = () => {
+                     const width = this.popup.querySelector('#se-cell-width').value;
+                     const height = this.popup.querySelector('#se-cell-height').value;
+                     const bgColor = this.popup.querySelector('#se-cell-bg-color').value;
+                     const padding = this.popup.querySelector('#se-cell-padding').value;
+
+                     if (this.currentCell) {
+                         this.currentCell.style.width = width;
+                         this.currentCell.style.height = height;
+                         this.currentCell.style.backgroundColor = bgColor;
+                         this.currentCell.style.padding = padding;
+                     }
+                     this.closePopup();
+                 };
+             }
+
+             // Text Align
+             ['left', 'center', 'right', 'justify'].forEach(align => {
+                 const btn = this.popup.querySelector(`#se-cell-align-${align}`);
+                 if (btn) btn.onclick = () => {
+                     if (this.currentCell) this.currentCell.style.textAlign = align;
+                 }
+             });
+
+             // Vertical Align
+             ['top', 'middle', 'bottom'].forEach(align => {
+                 const btn = this.popup.querySelector(`#se-cell-valign-${align}`);
+                 if (btn) btn.onclick = () => {
+                     if (this.currentCell) this.currentCell.style.verticalAlign = align;
+                 }
+             });
+        }
+
     }
 
     closePopup() {
@@ -1287,7 +1965,309 @@ class SEditor {
         // Remove other listeners if needed (not tracked currently)
     }
 
-    deleteSlash() {
+    // Table Operations
+    insertRow(where) {
+        if (!this.currentRow) return;
+        const table = this.currentTable;
+        const rowIndex = this.currentRow.rowIndex;
+        const newRow = table.insertRow(where === 'above' ? rowIndex : rowIndex + 1);
+        
+        // Match cell count of current row
+        const cellsCount = this.currentRow.cells.length;
+        for (let i = 0; i < cellsCount; i++) {
+            const newCell = newRow.insertCell(i);
+            newCell.innerHTML = '<br>';
+            newCell.style.border = '1px solid black';
+            newCell.style.padding = '8px';
+        }
+    }
+
+    deleteRow() {
+        if (!this.currentRow || !this.currentTable) return;
+        this.currentTable.deleteRow(this.currentRow.rowIndex);
+        this.closePopup();
+    }
+
+    insertColumn(where) {
+        if (!this.currentCell || !this.currentTable) return;
+        const cellIndex = this.currentCell.cellIndex;
+        // Simple column insertion - iterate all rows
+        // Note: usage of colspan/rowspan can complicate this. 
+        // For basic tables this is fine. For complex ones, we'd need a matrix map.
+        for (let i = 0; i < this.currentTable.rows.length; i++) {
+            const row = this.currentTable.rows[i];
+            const targetIndex = where === 'left' ? cellIndex : cellIndex + 1;
+            // Guard against out of bounds (though insertCell handles -1 for end)
+            const newCell = row.insertCell(targetIndex);
+            newCell.innerHTML = '<br>';
+            newCell.style.border = '1px solid black';
+            newCell.style.padding = '8px';
+        }
+    }
+
+    deleteColumn() {
+        if (!this.currentCell || !this.currentTable) return;
+        const cellIndex = this.currentCell.cellIndex;
+        for (let i = 0; i < this.currentTable.rows.length; i++) {
+            const row = this.currentTable.rows[i];
+            if (row.cells.length > cellIndex) {
+                row.deleteCell(cellIndex);
+            }
+        }
+        this.closePopup();
+    }
+
+    // Enhanced Table Operations
+    isCurrentRowHeader() {
+        if (!this.currentRow || this.currentRow.cells.length === 0) return false;
+        return this.currentRow.cells[0].tagName === 'TH';
+    }
+
+    isCurrentColumnHeader() {
+        if (!this.currentCell) return false;
+        return this.currentCell.tagName === 'TH';
+    }
+
+    toggleHeaderRow() {
+        if (!this.currentRow) return;
+        const replaceCell = (cell, type) => {
+            const newCell = document.createElement(type);
+            newCell.innerHTML = cell.innerHTML;
+            // Copy attributes
+            Array.from(cell.attributes).forEach(attr => newCell.setAttribute(attr.name, attr.value));
+            cell.parentNode.replaceChild(newCell, cell);
+        };
+        
+        const isHeader = this.currentRow.cells[0].tagName === 'TH';
+        const newType = isHeader ? 'td' : 'th';
+        
+        Array.from(this.currentRow.cells).forEach(cell => replaceCell(cell, newType));
+    }
+
+    toggleHeaderColumn() {
+        if (!this.currentCell) return;
+        const cellIndex = this.currentCell.cellIndex;
+        const replaceCell = (cell, type) => {
+             const newCell = document.createElement(type);
+             newCell.innerHTML = cell.innerHTML;
+             Array.from(cell.attributes).forEach(attr => newCell.setAttribute(attr.name, attr.value));
+             cell.parentNode.replaceChild(newCell, cell);
+        };
+
+        const isHeader = this.currentCell.tagName === 'TH';
+        const newType = isHeader ? 'td' : 'th';
+
+        for (let i = 0; i < this.currentTable.rows.length; i++) {
+            const row = this.currentTable.rows[i];
+            if (row.cells.length > cellIndex) {
+                replaceCell(row.cells[cellIndex], newType);
+            }
+        }
+    }
+
+    selectRow() {
+        if (!this.currentRow) return;
+        const selection = window.getSelection();
+        const range = document.createRange();
+        range.selectNodeContents(this.currentRow);
+        selection.removeAllRanges();
+        selection.addRange(range);
+    }
+
+    selectColumn() {
+        // Visual selection only for columns is hard with native selection APIs.
+        // We can simulate effectively by selecting all cells, but standard selection is one range.
+        // We will just highlight visually for now or select the current cell as fallback?
+        // Let's select the whole table as a fallback or iterate cells if possible (Multi-range FF only).
+        // For cross-browser, let's just highlight the current cell index column with a class?
+        // But persistent selection is tricky without custom selection engine.
+        // Let's just implement a "Select Table" instead if Column is too hard?
+        // Or just select all text in the column cells (creating multiple ranges is supported in Firefox, partially in others).
+        // Let's try selecting the first cell of the column.
+        if (this.currentCell) {
+             const range = document.createRange();
+             range.selectNodeContents(this.currentTable); 
+             // Ideally we want column, but let's just select table for now to avoid complexity of non-contiguous selection.
+             // Or maybe we can implement a custom "selected" class?
+             // Start simple: Select table.
+             const selection = window.getSelection();
+             selection.removeAllRanges();
+             selection.addRange(range);
+        }
+    }
+
+    mergeCell(direction) {
+        if (!this.currentCell) return;
+        const cell = this.currentCell;
+        const row = this.currentRow;
+        
+        // Helper to get cell at exact coords
+        const getGrid = (tbl) => {
+            // Very basic grid mapper that doesn't account for complex existing spans fully correctly without 2D array
+            // But sufficient for basic merges.
+            // For robust verify, we access cells by row index.
+            return tbl.rows;
+        };
+
+        if (direction === 'right') {
+            const nextCell = cell.nextElementSibling;
+            if (nextCell) {
+                const colspanCurrent = parseInt(cell.getAttribute('colspan') || 1);
+                const colspanNext = parseInt(nextCell.getAttribute('colspan') || 1);
+                cell.setAttribute('colspan', colspanCurrent + colspanNext);
+                cell.innerHTML += ' ' + nextCell.innerHTML;
+                nextCell.remove();
+            }
+        } else if (direction === 'down') {
+            const rowIndex = row.rowIndex;
+            const table = this.currentTable;
+            if (rowIndex + 1 < table.rows.length) {
+                const nextRow = table.rows[rowIndex + 1];
+                const cellIndex = cell.cellIndex;
+                const cellBelow = nextRow.cells[cellIndex]; 
+                
+                if (cellBelow) {
+                    const rowspanCurrent = parseInt(cell.getAttribute('rowspan') || 1);
+                    const rowspanBelow = parseInt(cellBelow.getAttribute('rowspan') || 1);
+                    cell.setAttribute('rowspan', rowspanCurrent + rowspanBelow);
+                    cell.innerHTML += '<br>' + cellBelow.innerHTML;
+                    cellBelow.remove();
+                }
+            }
+        } else if (direction === 'left') {
+             const prevCell = cell.previousElementSibling;
+             if (prevCell) {
+                 const colspanCurrent = parseInt(cell.getAttribute('colspan') || 1);
+                 const colspanPrev = parseInt(prevCell.getAttribute('colspan') || 1);
+                 prevCell.setAttribute('colspan', colspanCurrent + colspanPrev);
+                 prevCell.innerHTML += ' ' + cell.innerHTML;
+                 cell.remove();
+                 this.currentCell = prevCell; // Update focus
+             }
+        } else if (direction === 'up') {
+             const rowIndex = row.rowIndex;
+             const table = this.currentTable;
+             if (rowIndex > 0) {
+                 const prevRow = table.rows[rowIndex - 1];
+                 const cellIndex = cell.cellIndex;
+                 const cellAbove = prevRow.cells[cellIndex]; 
+                 
+                 if (cellAbove) {
+                     const rowspanCurrent = parseInt(cell.getAttribute('rowspan') || 1);
+                     const rowspanAbove = parseInt(cellAbove.getAttribute('rowspan') || 1);
+                     cellAbove.setAttribute('rowspan', rowspanCurrent + rowspanAbove);
+                     cellAbove.innerHTML += '<br>' + cell.innerHTML;
+                     cell.remove();
+                     this.currentCell = cellAbove;
+                     this.currentRow = prevRow;
+                 }
+             }
+        }
+    }
+
+    splitCell(direction) {
+        if (!this.currentCell) return;
+        
+        const colspan = parseInt(this.currentCell.getAttribute('colspan') || 1);
+        const rowspan = parseInt(this.currentCell.getAttribute('rowspan') || 1);
+
+        // Standard Split logic (Reset)
+        // If direction is specific we could try to be smarter, but standard 'split' usually means "reset to 1x1".
+        // The user menu has 'Split Vertically' and 'Split Horizontally', suggesting we might want to split a 1x1 cell?
+        // If 1x1:
+        // Split Vertically (Cols): Increase colspan? No, that merges.
+        // Split 1x1 into 2 cells:
+        // Horizontally (Row split): Add a row? No, insert a cell into current row?
+        // Actually, splitting a 1x1 cell usually implies modifying the table structure (adding columns/rows globally) or just nested table?
+        // Let's assume standard behavior:
+        // If spanned, un-span.
+        // If 1x1:
+        //   Horizontal Split: turn <td>A</td> into <td>A</td><td><br></td>? This breaks grid unless we add col globally.
+        //   Vertical Split: turn <td>A</td> into <tr><td>A</td></tr><tr><td>B</td></tr>? Breaks grid unless we add row globally.
+        // For now, let's implement un-span for spanned cells, and NO-OP for 1x1 cells to avoid breaking table layout.
+        
+        if (colspan > 1) {
+             for(let i=0; i < colspan - 1; i++) {
+                 const newCell = this.currentRow.insertCell(this.currentCell.cellIndex + 1);
+                 newCell.innerHTML = '<br>';
+                 newCell.style.border = '1px solid black';
+                 newCell.style.padding = '8px';
+             }
+             this.currentCell.removeAttribute('colspan');
+        }
+        
+        if (rowspan > 1) {
+             const startRow = this.currentRow.rowIndex;
+             const colIdx = this.currentCell.cellIndex;
+             for (let i = 1; i < rowspan; i++) {
+                 const targetRow = this.currentTable.rows[startRow + i];
+                 if (targetRow) {
+                     const newCell = targetRow.insertCell(colIdx);
+                     newCell.innerHTML = '<br>';
+                     newCell.style.border = '1px solid black';
+                     newCell.style.padding = '8px';
+                 }
+             }
+             this.currentCell.removeAttribute('rowspan');
+        }
+    }
+
+    toggleCaption() {
+        if (!this.currentTable) return;
+        let caption = this.currentTable.querySelector('caption');
+        if (caption) {
+            caption.remove();
+        } else {
+            caption = this.currentTable.createCaption();
+            caption.className = 'se-table-caption';
+            caption.innerText = 'Table Caption';
+            
+            // Focus and Select
+            const range = document.createRange();
+            range.selectNodeContents(caption);
+            const sel = window.getSelection();
+            sel.removeAllRanges();
+            sel.addRange(range);
+            
+            // this.closePopup(); // Optional: Close popup so they can type? 
+            // The popup logic currently refreshes 'table-main' which might steal focus back or obscure?
+            // "this.showPopup('table-main', rect)" is called in the click handler.
+            // If we want to focus, we should probably NOT show the popup again or show it intelligently.
+            // But the listener calls showPopup... logic issue.
+            // We need to focus AFTER the popup refresh or prevent refresh?
+            // Actually, if I toggle on, I want to type. The popup is for *table* tools.
+            // Maybe we should prioritize the user typing.
+            // I will return the caption element so the caller can focus it? 
+            // Or just do it here. The caller in showPopup calls showPopup again.
+            // That second showPopup might steal focus to the toolbar buttons? No, buttons are not auto-focused.
+            // But if the popup is re-rendered, focus remains in editable area unless explicitly moved.
+            // Let's try explicit focusing here.
+        }
+    }
+
+    setTableProperties(data) {
+        if (!this.currentTable) return;
+        if (data.width) this.currentTable.style.width = data.width;
+        if (data.border) {
+            this.currentTable.style.border = data.border;
+            // Also apply to cells if requested? Usually table border implies cell borders in simple mode
+            // But let's keep it to wrapper for now or simple "1px solid black" toggles
+        }
+        if (data.borderCollapse) this.currentTable.style.borderCollapse = data.borderCollapse;
+        if (data.backgroundColor) this.currentTable.style.backgroundColor = data.backgroundColor;
+    }
+
+    setCellProperties(data) {
+        if (!this.currentCell) return;
+        if (data.width) this.currentCell.style.width = data.width;
+        if (data.height) this.currentCell.style.height = data.height;
+        if (data.backgroundColor) this.currentCell.style.backgroundColor = data.backgroundColor;
+        if (data.borderColor) this.currentCell.style.borderColor = data.borderColor;
+        if (data.textAlign) this.currentCell.style.textAlign = data.textAlign;
+        if (data.verticalAlign) this.currentCell.style.verticalAlign = data.verticalAlign;
+    }
+
+    getSelectionAnchor() {
         const selection = window.getSelection();
         if (selection.rangeCount > 0) {
             const range = selection.getRangeAt(0);

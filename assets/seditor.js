@@ -213,8 +213,12 @@ class SEditor {
 
         // Sync Handling & History
         this.page.addEventListener('input', () => {
-            this.updateOriginal();
-            this.saveState(); // Save on every input
+            // Debounce syncing and history saving for performance
+            clearTimeout(this.saveTimeout);
+            this.saveTimeout = setTimeout(() => {
+                this.updateOriginal();
+                this.saveState();
+            }, 300); // Wait 300ms after typing stops
         });
 
         this.sourceArea.addEventListener('input', () => {
@@ -224,12 +228,13 @@ class SEditor {
             }
         });
 
-        // Tab Handling
         // Tab Handling & Shortcuts
         this.page.addEventListener('keydown', (e) => {
             if (e.key === 'Tab') {
                 e.preventDefault();
                 this.cmd('insertHTML', '&nbsp;&nbsp;&nbsp;&nbsp;');
+                // Create a history point manually for tab
+                this.saveState(); 
             }
             
             // Undo / Redo Shortcuts
@@ -257,15 +262,27 @@ class SEditor {
             if (html) {
                 const clean = this.cleanHTML(html);
                 this.cmd('insertHTML', clean);
+                this.saveState(); // Save state immediately after paste
             } else {
                 this.cmd('insertText', text);
+                this.saveState(); // Save state immediately after paste
             }
         });
 
-        // Update Toolbar State on interaction
+        // Update Toolbar State on interaction (Debounced)
+        const updateToolbarDebounced = () => {
+            clearTimeout(this.toolbarTimeout);
+            this.toolbarTimeout = setTimeout(() => {
+                this.updateToolbarState();
+            }, 200);
+        };
+
         this.page.addEventListener('keyup', (e) => {
-            this.updateToolbarState();
-            // Slash Command
+            updateToolbarDebounced();
+            
+            // Slash Command (keep immediate for responsiveness?)
+            // Slash command logic relies on selection, which is fast.
+            // Let's keep slash command check immediate or it feels laggy.
             if (e.key === '/') {
                 const selection = window.getSelection();
                 if (selection.rangeCount > 0) {
@@ -278,8 +295,8 @@ class SEditor {
                 }
             }
         });
-        this.page.addEventListener('mouseup', () => this.updateToolbarState());
-        this.page.addEventListener('click', () => this.updateToolbarState());
+        this.page.addEventListener('mouseup', () => updateToolbarDebounced());
+        this.page.addEventListener('click', () => updateToolbarDebounced());
 
         this.wrapper.appendChild(this.page);
         this.wrapper.appendChild(this.sourceArea);
